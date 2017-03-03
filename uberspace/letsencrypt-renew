@@ -14,6 +14,9 @@ MSG_TMP=$(mktemp)
 MAIL_TMP=$(mktemp)
 chmod 600 $OUTPUT_TMP $MSG_TMP $MAIL_TMP
 
+# in cron we don't have a PATH set ...
+PATH="/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+
 
 # ===========================================================================
 
