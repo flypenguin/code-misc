@@ -1,0 +1,5 @@
+.vagrant
+.dockercfg
+temp/*
+log
+example.nomad
