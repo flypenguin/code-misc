@@ -1,0 +1,7 @@
+FROM alpine
+
+EXPOSE 80
+
+COPY go_server_RED /
+
+CMD ["/go_server_RED"]
