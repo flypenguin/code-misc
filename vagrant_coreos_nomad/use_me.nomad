@@ -5,8 +5,14 @@ job "redgreen" {
   # ok
   datacenters = ["dc1"]
 
+  # required, although the docs indicate otherwise
+  region = "global"
+
   # one per node
   type = "system"
+
+  # required, although the docs indicate otherwise
+  priority = 50
 
   update {
     stagger = "10s"
@@ -37,15 +43,24 @@ job "redgreen" {
       }
 
       resources {
-        cpu    = 10  # 10 MHz
+        cpu    = 50  # 50 MHz, minimum
         memory = 25  # 25MB
         network {
           # this allocates a dynamic host port and maps it to the one in the
           # container with the same name ("server") as above. so you can map
           # multiple ports.
           port "server" {}
+
+          # mbits is REQUIRED
+          mbits = 1
         }
       }
+
+      # required, although the docs indicate otherwise
+      logs {
+        max_files     = 10
+        max_file_size = 10
+      }      
 
       # this is for consul. let's not do this :)
       # service {
