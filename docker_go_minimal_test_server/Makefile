@@ -16,8 +16,8 @@ push:
 
 clean:
 	./build.sh clean
-	rm go_server
-	rm Dockerfile
+	rm -f go_server
+	rm -f Dockerfile
 
 run:
 	docker run -ti -p 80:8080 flypenguin/test_server
