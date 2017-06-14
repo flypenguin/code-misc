@@ -1,3 +1,2 @@
 Dockerfile*
-server.go
-go_server_*
+go_server
