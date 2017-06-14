@@ -23,5 +23,5 @@ func main() {
 	}
 	http.HandleFunc("/", handler_root)
 	http.HandleFunc("/health", handler_health)
-	http.ListenAndServe(":80", nil)
+	http.ListenAndServe(":8080", nil)
 }
