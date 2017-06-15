@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 
+echo "Please don't use this."
+echo "Please use docker-compose up."
+
+exit
+
 docker run \
   --rm -ti \
   -p "5601:5601" \

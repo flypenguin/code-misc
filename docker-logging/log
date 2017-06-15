@@ -5,6 +5,11 @@
 # the dots" and get back the full image name, including host
 # name part at the end.
 
+# the image "me.with.dots/busy/box:boo" is a simple busybox,
+# just tagged differently. I want to have the image name 
+# available in elastic, so I needed to test whether this is
+# actually possible.
+
 docker run \
   --log-driver=fluentd \
   --log-opt tag="c11hdocker.{{.ImageFullID}}.{{.ImageName}}" \
