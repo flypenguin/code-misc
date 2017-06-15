@@ -10,10 +10,11 @@
 # available in elastic, so I needed to test whether this is
 # actually possible.
 
+
 docker run \
   --log-driver=fluentd \
   --log-opt tag="c11hdocker.{{.ImageFullID}}.{{.ImageName}}" \
   --rm -ti \
   me.with.dots/busy/box:boo \
-  echo "$@"
+  echo -e "$@"
 
