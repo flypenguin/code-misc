@@ -8,6 +8,7 @@ Modified everything a bit, and not Kibana seems to be not working. Annoying, but
 ## Used links
 
 * [fluentd filter plugin](http://docs.fluentd.org/v0.12/articles/filter_record_transformer#ltrecordgt-directive)
+* [fluentd concat plugin](https://github.com/fluent-plugins-nursery/fluent-plugin-concat)
 * [elastic search api](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-search.html)
 * [fluentd docker logging receipes](http://www.fluentd.org/guides/recipes/docker-logging)
 * [fluentd logging in elastic & s3](http://www.fluentd.org/guides/recipes/elasticsearch-and-s3)
