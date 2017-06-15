@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -e
+
 docker build \
 	-t flypenguin/code-misc-fluentd \
 	docker_fluentd
@@ -13,5 +15,5 @@ docker run \
   -v $(pwd)/logs:/fluentd/log \
   -v $(pwd)/docker_fluentd/config:/fluentd/etc \
   -e FLUENTD_CONF=fluentd.conf \
-  -e FLUENTD_OPT="-v" \
+  -e FLUENTD_OPT="" \
   flypenguin/code-misc-fluentd
