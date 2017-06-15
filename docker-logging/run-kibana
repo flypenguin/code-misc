@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+docker run \
+  --rm -ti \
+  -p "5601:5601" \
+  -v $(pwd)/docker_kibana/config/:/usr/share/kibana/config \
+  docker.elastic.co/kibana/kibana:5.4.1

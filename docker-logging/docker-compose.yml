@@ -1,0 +1,47 @@
+version: '2'
+
+services:
+
+  elasticsearch:
+    build: docker_elasticsearch/
+    volumes:
+      - ./docker_elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    environment:
+      ES_JAVA_OPTS: "-Xmx256m -Xms256m"
+
+  kibana:
+    build: docker_kibana/
+    volumes:
+      - ./docker_kibana/config/:/usr/share/kibana/config
+    ports:
+      - "5601:5601"
+    depends_on:
+      - elasticsearch
+
+
+# fluentd:
+#   build: docker_fluentd
+#   volumes:
+#     - ./docker_fluentd/config:/fluentd/etc
+#   ports:
+#     - "24224:24224"
+#     - "24224:24224/udp"
+#   environment:
+#     FLUENTD_CONF: fluentd.conf
+
+# disabled cause we don't need that shit. 
+#  logstash:
+#    build: docker_logstash/
+#    volumes:
+#      - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml
+#      - ./logstash/pipeline:/usr/share/logstash/pipeline
+#    ports:
+#      - "5000:5000"
+#    environment:
+#      LS_JAVA_OPTS: "-Xmx256m -Xms256m"
+#    depends_on:
+#      - elasticsearch
+

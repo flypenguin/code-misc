@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+docker build \
+	-t flypenguin/code-misc-fluentd \
+	docker_fluentd
+
+# see here:
+# https://hub.docker.com/r/fluent/fluentd/
+docker run \
+  --rm -ti \
+  --network dockerlogging_default \
+  -p 24224:24224 -p 24224:24224/udp \
+  -v $(pwd)/logs:/fluentd/log \
+  -v $(pwd)/docker_fluentd/config:/fluentd/etc \
+  -e FLUENTD_CONF=fluentd.conf \
+  -e FLUENTD_OPT="-v" \
+  flypenguin/code-misc-fluentd

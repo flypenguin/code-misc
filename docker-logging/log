@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+# the ImageName must be last - because it contains dots.
+# image id does not (hopefully). this way we can "re-connect
+# the dots" and get back the full image name, including host
+# name part at the end.
+
+docker run \
+  --log-driver=fluentd \
+  --log-opt tag="c11hdocker.{{.ImageFullID}}.{{.ImageName}}" \
+  --rm -ti \
+  me.with.dots/busy/box:boo \
+  echo "$@"
+
