@@ -1,0 +1,22 @@
+version: '2'
+
+services:
+  postgres:
+    image: sameersbn/postgresql
+    restart: always
+    volumes:
+      - ./data/postgres:/var/lib/postgresql
+    environment:
+      DB_USER: nextcloud
+      DB_NAME: nextcloud
+      DB_PASS: nextcloud
+
+  app:
+    image: nextcloud
+    ports:
+      - 8080:80
+    links:
+      - postgres
+    volumes:
+      - ./data/nextcloud:/var/www/html
+    restart: always
