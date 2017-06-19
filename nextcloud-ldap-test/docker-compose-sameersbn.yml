@@ -5,18 +5,18 @@ services:
     image: sameersbn/postgresql
     restart: always
     volumes:
-      - ./data/postgres:/var/lib/postgresql
+      - ./data/sameer-postgres:/var/lib/postgresql
     environment:
       DB_USER: nextcloud
       DB_NAME: nextcloud
       DB_PASS: nextcloud
 
   app:
-    image: nextcloud
+    image: sameersbn/nextcloud
     ports:
-      - 8080:80
+      - 8082:80
     links:
       - postgres
     volumes:
-      - ./data/nextcloud:/var/www/html
+      - ./data/sameer-nextcloud:/var/www/html
     restart: always
