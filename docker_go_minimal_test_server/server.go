@@ -17,11 +17,19 @@ import (
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 void *foo(size_t count) {
-        void *thing = (void *)malloc(sizeof(char) * count * 1024 * 1024);
-        printf("count %zu\n", count);
-        return thing;
+	int alloc_size = sizeof(char) * count * 1024 * 1024;
+	void *thing = (void *)malloc(alloc_size);
+	if (thing != NULL) {
+		printf("count %zu\n", count);
+		printf("Setting memory to zero ...\n");
+		memset(thing, 0, alloc_size);
+	} else {
+		printf("Allocation FAILED!\n");
+	}
+	return thing;
 }
 
 */
