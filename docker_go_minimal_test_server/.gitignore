@@ -1,3 +1,4 @@
+.vscode/
 Dockerfile*
 docker_go_minimal_test_server
 go_server
