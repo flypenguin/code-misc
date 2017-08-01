@@ -1,13 +1,14 @@
-all: prepare build_source_container build_containers
+all: prepare cbuild build_containers
 
 prepare:
 	./build.sh prepare
 
-host:
+hbuild:
 	rm -f go_server
+	go get github.com/gorilla/mux
 	go build -v -o go_server
 
-build_source_container:
+cbuild:
 	rm -f go_server
 	./build.sh source
 
