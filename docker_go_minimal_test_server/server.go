@@ -7,15 +7,46 @@ import (
 	"strconv"
 	"strings"
 
-	"bytes"
-
-	"runtime/debug"
+	"runtime"
+	"unsafe"
 
 	"github.com/gorilla/mux"
 )
 
+/*
+
+#include <stdlib.h>
+#include <stdio.h>
+
+void *foo(size_t count) {
+        void *thing = (void *)malloc(sizeof(char) * count * 1024 * 1024);
+        printf("count %zu\n", count);
+        return thing;
+}
+
+*/
+import "C"
+
+type Memory struct {
+	size   int
+	memory unsafe.Pointer
+}
+
+func (m *Memory) alloc() {
+	m.memory = C.foo(C.size_t(m.size))
+	fmt.Printf("alloced memory %v\n", m.memory)
+	runtime.SetFinalizer(m, free)
+}
+
+func free(m *Memory) {
+	fmt.Printf("freeing memory %d %v\n", m.size, m.memory)
+	C.free(unsafe.Pointer(m.memory))
+}
+
 var color string = "a multi-colored shine on all surfaces"
-var allocations map[string]bytes.Buffer
+
+// var allocations map[string]bytes.Buffer
+var allocations map[string]*Memory
 var count int
 
 func handleHealth(w http.ResponseWriter, r *http.Request) {
@@ -34,11 +65,20 @@ func handleAllocate(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Invalid argument, amount should be an integer")
 	}
 
-	buf := bytes.Buffer{}
-	buf.Grow(amount)
 	count = count + 1
+
+	/*
+		buf := bytes.Buffer{}
+		buf.Grow(amount)
+
+		id := fmt.Sprintf("%d", count)
+		allocations[id] = buf
+	*/
 	id := fmt.Sprintf("%d", count)
-	allocations[id] = buf
+	m := Memory{}
+	m.size = amount
+	m.alloc()
+	allocations[id] = &m
 	fmt.Fprintf(w, id)
 }
 
@@ -48,6 +88,8 @@ func handleDeallocate(w http.ResponseWriter, r *http.Request) {
 	if _, ok := allocations[id]; ok {
 		delete(allocations, id)
 		fmt.Fprintf(w, "OK")
+		runtime.GC()
+		return
 	}
 
 	w.WriteHeader(404)
@@ -59,15 +101,16 @@ func handleClear(w http.ResponseWriter, r *http.Request) {
 	for key := range allocations {
 		delete(allocations, key)
 	}
-	debug.FreeOSMemory()
+	// debug.FreeOSMemory()
+	runtime.GC()
 	fmt.Fprintf(w, "OK")
 }
 
 func handleAllocations(w http.ResponseWriter, r *http.Request) {
 	var total int
 	for key, value := range allocations {
-		total = total + value.Cap()
-		fmt.Fprintf(w, fmt.Sprintf("%s => %d\n", key, value.Cap()))
+		total = total + value.size
+		fmt.Fprintf(w, fmt.Sprintf("%s => %d\n", key, value.size))
 	}
 	fmt.Fprintf(w, fmt.Sprintf("total %d\n", total))
 }
@@ -77,7 +120,7 @@ func main() {
 		color = strings.ToUpper(os.Args[1])
 	}
 
-	allocations = make(map[string]bytes.Buffer)
+	allocations = make(map[string]*Memory)
 
 	r := mux.NewRouter()
 
@@ -88,5 +131,8 @@ func main() {
 	r.HandleFunc("/clear", handleClear)
 	r.HandleFunc("/allocations", handleAllocations)
 	http.Handle("/", r)
-	_ = http.ListenAndServe(":8080", nil)
+	err := http.ListenAndServe(":8080", nil)
+	if err != nil {
+		fmt.Println(err)
+	}
 }
