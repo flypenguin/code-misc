@@ -2,7 +2,7 @@
 
 A minimal test server returning the first argument of the command line back if you curl `/`. This is useful for quick deployment testing with orchestration tools (answer the questions "does deployment work?" etc.)
 
-Please use the `Makefile` to get your stuff done. 
+Please use the `Makefile` to get your stuff done.
 
 
 # Quickstart
@@ -19,6 +19,19 @@ $ curl localhost:8080
 [a cool color]
 
 $ _
+```
+
+
+## go_server notes
+
+The server has the following endpoints:
+
+```
+/                   -> <a color string>
+/health             -> "OK"
+/allocate/{NUM}     -> NUM is a number. NUM megabytes will be allocated, {ID} is returned
+/deallocate/{ID}    -> deallocates the memory block with ID {ID}
+/allocations        -> prints a list of all allocations
 ```
 
 

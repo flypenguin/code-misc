@@ -1,12 +1,18 @@
-#!/usr/bin/env bash 
+#!/usr/bin/env bash
 
-if [ "$1" == "source" ] ; then
+BC="temp/go_builder"
+
+if [ "$1" == "prepare" ]; then
+
+  docker build -t "$BC" -f ./Dockerfile.build .
+
+elif [ "$1" == "source" ] ; then
 
     docker run --rm -ti \
         -v $(pwd):/go/src/app \
         -w /go/src/app \
-        golang:alpine \
-        go build -v -o go_server
+        "$BC" \
+        sh -c "go get && go build -v -o go_server"
 
 elif [ "$1" == "containers" ] ; then
 

@@ -1,4 +1,7 @@
-all: build_source_container build_containers
+all: prepare build_source_container build_containers
+
+prepare:
+	./build.sh prepare
 
 host:
 	rm -f go_server
