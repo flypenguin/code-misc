@@ -20,7 +20,7 @@ import (
 #include <string.h>
 
 void *foo(size_t count) {
-	int alloc_size = sizeof(char) * count * 1024 * 1024;
+	size_t alloc_size = sizeof(char) * count * 1024 * 1024;
 	void *thing = (void *)malloc(alloc_size);
 	if (thing != NULL) {
 		printf("count %zu\n", count);
