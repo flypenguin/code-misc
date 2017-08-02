@@ -10,6 +10,8 @@ import (
 	"runtime"
 	"unsafe"
 
+	"encoding/json"
+
 	"github.com/gorilla/mux"
 )
 
@@ -38,6 +40,16 @@ import "C"
 type Memory struct {
 	size   int
 	memory unsafe.Pointer
+}
+
+type Allocation struct {
+	ID   string `json:"id"`
+	Size int    `json:"size"`
+}
+
+type Allocations struct {
+	Allocations []Allocation `json:"allocations"`
+	Total       int          `json:"total_size"`
 }
 
 func (m *Memory) alloc() {
@@ -116,11 +128,21 @@ func handleClear(w http.ResponseWriter, r *http.Request) {
 
 func handleAllocations(w http.ResponseWriter, r *http.Request) {
 	var total int
+	all := Allocations{}
+
 	for key, value := range allocations {
 		total = total + value.size
-		fmt.Fprintf(w, fmt.Sprintf("%s => %d\n", key, value.size))
+		all.Allocations = append(all.Allocations, Allocation{key, value.size})
+		// fmt.Fprintf(w, fmt.Sprintf("%s => %d\n", key, value.size))
 	}
-	fmt.Fprintf(w, fmt.Sprintf("total %d\n", total))
+
+	all.Total = total
+	asJson, err := json.Marshal(all)
+	if err != nil {
+		fmt.Fprintf(w, "%s\n", err)
+	} else {
+		fmt.Fprintf(w, "%s\n", string(asJson))
+	}
 }
 
 func main() {
