@@ -1,0 +1,11 @@
+#!/usr/bin/env bash 
+
+clear
+
+NUM_WORKERS=${1:-5}
+PORT=${2:-5100}
+
+echo "USING PORT         $PORT"
+echo "# OF WORKERS       $NUM_WORKERS"
+
+exec python -m sanic brothel.sweetheart --host=0.0.0.0 --port=$PORT --workers=$NUM_WORKERS

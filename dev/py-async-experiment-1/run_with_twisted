@@ -1,0 +1,12 @@
+#!/usr/bin/env bash 
+
+clear
+
+NUM_WORKERS=${1:-5}
+PORT=${2:-5100}
+
+echo "USING PORT         $PORT"
+echo "# OF WORKERS       $NUM_WORKERS"
+echo DOES NOT WORK RIGHT NOW
+
+#exec twistd web -n --port $PORT --wsgi tavern.wench

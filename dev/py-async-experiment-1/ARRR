@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+rm -f *.json
+clear
+
+NUM_REQS=${1:-10}
+NUM_PARALLEL_REQS=${2:-5}
+UPATH=${3:-arrr}
+
+echo "# OF PARALLEL REQUESTS        $NUM_PARALLEL_REQS"
+echo "WITH PATH                     $UPATH"
+
+
+#./artillery quick http://localhost:$PORT/$UPATH -c $NUM_PARALLEL_REQS -n 1
+loadtest http://localhost:5100/$UPATH -n $NUM_REQS -c $NUM_PARALLEL_REQS
