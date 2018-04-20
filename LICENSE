@@ -1,6 +1,17 @@
+##############################################################################
+
+EVERY SUBDIRECTORY CAN HAVE ITS OWN LICENSE.
+IN THAT CASE THIS OTHER LICENSE IS EFFECTIVE.
+
+IF THERE IS NO LICENSE FILE PRESENT IN THE SAME DIRECTORY OR ANY DIRECTORY
+DIRECTLY ABOVE A FILE, ONLY THEN THIS LICENSE APPLIES.
+
+##############################################################################
+
+
 MIT License
 
-Copyright (c) 2017 Axel Bock
+Copyright (c) 2018 Axel Bock
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
