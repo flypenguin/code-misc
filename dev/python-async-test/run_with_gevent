@@ -1,0 +1,10 @@
+#!/usr/bin/env python
+
+from gevent.wsgi import WSGIServer
+from tavern import wench
+
+# clear screen
+print(chr(27) + "[2J")
+
+http_server = WSGIServer(('', 5100), wench)
+http_server.serve_forever()
