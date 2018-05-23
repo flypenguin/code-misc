@@ -1,0 +1,27 @@
+# Elastic Beanstalk Files
+.elasticbeanstalk/*
+!.elasticbeanstalk/*.cfg.yml
+!.elasticbeanstalk/*.global.yml
+ebextensions/
+.ebextensions/
+
+# the non-dist versions of config files
+app_config_json.template
+elb-hostname.tf
+
+# generally added files for local tests
+my-*
+
+# "generated" files
+.terraform/
+terraform.tfvars
+support/s3.tf.dist
+app_version_*.tf
+Dockerrun.aws.json
+
+# editor files
+.idea/
+*.sublime-*
+
+# other files
+tmp/
