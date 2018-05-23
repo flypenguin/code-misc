@@ -1,0 +1,18 @@
+[
+    {
+        "caption": "Piper: Open predefined command list ...",
+        "command": "pipe_through_predefined"
+    },
+    {
+        "caption": "Piper: Delete entry from command list",
+        "command": "piper_delete_entry"
+    },
+    {
+        "caption": "Piper: Add entry to command list",
+        "command": "piper_add_entry"
+    },
+    {
+        "caption": "Piper: Pipe through external command",
+        "command": "pipe_through_external"
+    }
+]

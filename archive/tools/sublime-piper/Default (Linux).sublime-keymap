@@ -1,0 +1,6 @@
+[
+
+    { "keys": ["ctrl+shift+1"], "command": "pipe_through_external" }, 
+    { "keys": ["ctrl+shift+2"], "command": "pipe_through_predefined" }
+
+]
