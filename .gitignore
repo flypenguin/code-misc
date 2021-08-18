@@ -1,3 +1,18 @@
+# exclude some "secret" files
+secret-*
+secret_*
+.secret.*
+.local.*
+local_*
+local-*
+
+# .env files also seem to be a good idea.
+.env
+
+# fully exclude visual studio
+.vscode/
+
+# exclude temp files
 temp/
 temp_*/
 temp-*/
