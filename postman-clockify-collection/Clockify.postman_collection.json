@@ -1,0 +1,1431 @@
+{
+	"info": {
+		"_postman_id": "f6b8724f-871a-4894-a817-fcec6eb8430d",
+		"name": "Clockify",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Client",
+			"item": [
+				{
+					"name": "CREATE client in workspace",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"my new client\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{clientsBaseUrl}}",
+							"host": [
+								"{{clientsBaseUrl}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "RETRIEVE clients in workspace",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "archived",
+								"value": "true",
+								"type": "text",
+								"disabled": true
+							},
+							{
+								"key": "name",
+								"value": "some name",
+								"type": "text",
+								"disabled": true
+							},
+							{
+								"key": "page",
+								"value": "1",
+								"type": "text",
+								"disabled": true
+							},
+							{
+								"key": "page-size",
+								"value": "1000",
+								"type": "text",
+								"disabled": true
+							},
+							{
+								"key": "sort-column",
+								"value": "NAME",
+								"type": "text",
+								"disabled": true
+							},
+							{
+								"key": "sort-order",
+								"value": "ASCENDING | DESCENDING",
+								"type": "text",
+								"disabled": true
+							}
+						],
+						"url": {
+							"raw": "{{clientsBaseUrl}}",
+							"host": [
+								"{{clientsBaseUrl}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "UPDATE client in workspace",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"my renamed client\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{clientsBaseUrl}}/CLIENT_ID",
+							"host": [
+								"{{clientsBaseUrl}}"
+							],
+							"path": [
+								"CLIENT_ID"
+							],
+							"query": [
+								{
+									"key": "archive-projects",
+									"value": "true",
+									"description": "Controls whether archiving client will result in archiving all projects of given client",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DELETE client in workspace",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{clientsBaseUrl}}/CLIENT_ID",
+							"host": [
+								"{{clientsBaseUrl}}"
+							],
+							"path": [
+								"CLIENT_ID"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Groups",
+			"item": [
+				{
+					"name": "REQUEST all groups in workspace",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{groupsBaseUrl}}?page=1&page-size=1000&projectId=PROJECT_ID&name=some name&sort-order=ASCENDING | DESCENDING&sort-column=NAME",
+							"host": [
+								"{{groupsBaseUrl}}"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "page-size",
+									"value": "1000"
+								},
+								{
+									"key": "projectId",
+									"value": "PROJECT_ID"
+								},
+								{
+									"key": "name",
+									"value": "some name"
+								},
+								{
+									"key": "sort-order",
+									"value": "ASCENDING | DESCENDING"
+								},
+								{
+									"key": "sort-column",
+									"value": "NAME"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CREATE new group in workspace",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"My group\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{groupsBaseUrl}}",
+							"host": [
+								"{{groupsBaseUrl}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "UPDATE group in workspace",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"My group\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{groupsBaseUrl}}/USERGROUP_ID",
+							"host": [
+								"{{groupsBaseUrl}}"
+							],
+							"path": [
+								"USERGROUP_ID"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Project",
+			"item": [
+				{
+					"name": "CREATE project in workspace",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"My API Project 2\",\n\n  \"clientId\": \"\",\n  \"isPublic\": \"false\",\n  \"color\": \"#f44336\",\n  \"note\": \"All fields except 'name' are optional, not sure about the STRING value for 'billable'\",\n  \"billable\": true,\n  \"public\": false\n}\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{projectsBaseUrl}}",
+							"host": [
+								"{{projectsBaseUrl}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "RETRIEVE projects in workspace",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{projectsBaseUrl}}",
+							"host": [
+								"{{projectsBaseUrl}}"
+							],
+							"query": [
+								{
+									"key": "archived",
+									"value": "true",
+									"disabled": true
+								},
+								{
+									"key": "page",
+									"value": "1",
+									"disabled": true
+								},
+								{
+									"key": "page-size",
+									"value": "1000",
+									"disabled": true
+								},
+								{
+									"key": "billable",
+									"value": "true",
+									"disabled": true
+								},
+								{
+									"key": "clients",
+									"value": "client1,client2",
+									"disabled": true
+								},
+								{
+									"key": "contains-client",
+									"value": "client1",
+									"disabled": true
+								},
+								{
+									"key": "client-status",
+									"value": "ACTIVE | ARCHIVED",
+									"disabled": true
+								},
+								{
+									"key": "users",
+									"value": "user1,user2",
+									"disabled": true
+								},
+								{
+									"key": "contains-users",
+									"value": "user1",
+									"disabled": true
+								},
+								{
+									"key": "user-status",
+									"value": "ACTIVE | INACTIVE",
+									"disabled": true
+								},
+								{
+									"key": "is-template",
+									"value": "true",
+									"disabled": true
+								},
+								{
+									"key": "sort-column",
+									"value": "NAME | CLIENT_NAME | DURATION",
+									"disabled": true
+								},
+								{
+									"key": "sort-order",
+									"value": "ASCENDING | DESCENDING",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "UPDATE project in workspace",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"My API Project\",\n  \"clientId\": \"\",\n  \"isPublic\": \"false\",\n  \"hourlyRate\": {\n      \"amount\": 3600\n  },\n  \"color\": \"#f44336\",\n  \"note\": \"This is project's note (optional)\",\n  \"billable\": true,\n  \"archived\": true\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{projectsBaseUrl}}/PROJECT_ID",
+							"host": [
+								"{{projectsBaseUrl}}"
+							],
+							"path": [
+								"PROJECT_ID"
+							],
+							"query": [
+								{
+									"key": "estimate type",
+									"value": "MANUAL | AUTO",
+									"description": "MANUAL type enables one fixed estimate for the whole project. AUTO type enables task-based project estimate. If AUTO is enabled, estimate duration doesn't matter.",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DELETE project in workspace",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{projectsBaseUrl}}/PROJECT_ID",
+							"host": [
+								"{{projectsBaseUrl}}"
+							],
+							"path": [
+								"PROJECT_ID"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "UPDATE project ESTIMATE in workspace",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"timeEstimate\": {\n    \"estimate\": \"PT1H0M0S\",\n    \"type\": \"MANUAL\",\n    \"active\": false,\n    \"resetOption\": \"MONTHLY\"\n  },\n  \"budgetEstimate\": {\n    \"estimate\": 1100,\n    \"type\": \"MANUAL\",\n    \"active\": true,\n    \"resetOption\": null\n  }\n}\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{projectsBaseUrl}}/PROJECT_ID/estimate",
+							"host": [
+								"{{projectsBaseUrl}}"
+							],
+							"path": [
+								"PROJECT_ID",
+								"estimate"
+							],
+							"query": [
+								{
+									"key": "active",
+									"value": "???",
+									"description": "Choose if estimate is in time or budget. Only one of the two can be active. If you need \"No estimate\", then send empty \"{}\" request, or set both active fields as false.",
+									"disabled": true
+								},
+								{
+									"key": "reset",
+									"value": "null | MONTHLY",
+									"description": "Choose if estimate resets each month. Possible values: null and MONTHLY",
+									"disabled": true
+								},
+								{
+									"key": "type",
+									"value": "MANUAL | AUTO",
+									"description": "Possible values: MANUAL (for estimating whole project) and AUTO (to enable task-based estimate)",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "UPDATE project MEMBERSHIPS",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"memberships\": [\n    {\n      \"userId\": \"5ef31421f9ef6228d72d8833\",\n      \"hourlyRate\": {\n        \"amount\": 2000\n      }\n    }\n  ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{projectsBaseUrl}}/PROJECT_ID/memberships",
+							"host": [
+								"{{projectsBaseUrl}}"
+							],
+							"path": [
+								"PROJECT_ID",
+								"memberships"
+							]
+						},
+						"description": "- `userId` can be user ID _or_ group ID.\n- `hourlyRate` is optional."
+					},
+					"response": []
+				},
+				{
+					"name": "UPDATE project TEMPLATE status",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"isTemplate\": \"true\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{projectsBaseUrl}}/PROJECT_ID/template",
+							"host": [
+								"{{projectsBaseUrl}}"
+							],
+							"path": [
+								"PROJECT_ID",
+								"template"
+							]
+						},
+						"description": "- `userId` can be user ID _or_ group ID.\n- `hourlyRate` is optional."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Tag",
+			"item": [
+				{
+					"name": "CREATE a new tag in workspace",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Tag 1\"\n}\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{tagsBaseUrl}}",
+							"host": [
+								"{{tagsBaseUrl}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "RETRIEVE tags in workspace",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{tagsBaseUrl}}",
+							"host": [
+								"{{tagsBaseUrl}}"
+							],
+							"query": [
+								{
+									"key": "name",
+									"value": "some name",
+									"description": "If provided, tags will be filtered by name.",
+									"disabled": true
+								},
+								{
+									"key": "archived",
+									"value": "true",
+									"description": "If true, you'll get only archived tags. If false, you'll get only active tags.",
+									"disabled": true
+								},
+								{
+									"key": "page",
+									"value": "1",
+									"disabled": true
+								},
+								{
+									"key": "page-size",
+									"value": "1000",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "UPDATE tag in workspace",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"archived\": false,\n  \"name\": \"Tag\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{tagsBaseUrl}}/TAG_ID",
+							"host": [
+								"{{tagsBaseUrl}}"
+							],
+							"path": [
+								"TAG_ID"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DELETE tag from workspace",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{tagsBaseUrl}}/TAG_ID",
+							"host": [
+								"{{tagsBaseUrl}}"
+							],
+							"path": [
+								"TAG_ID"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Task",
+			"item": [
+				{
+					"name": "CREATE task in project in workspace",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"A task - all other fields optional, and billable can't be set _HERE_ (see 'update task')\",\n\n  \"assigneeIds\": [\"some assignee ID\"],\n  \"estimate\": \"PT2H\",\n  \"status\": \"ACTIVE | DONE\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{projectsBaseUrl}}/PROJECT_ID/tasks",
+							"host": [
+								"{{projectsBaseUrl}}"
+							],
+							"path": [
+								"PROJECT_ID",
+								"tasks"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "RETRIEVE tasks in project in workspace",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{projectsBaseUrl}}/PROJECT_ID/tasks",
+							"host": [
+								"{{projectsBaseUrl}}"
+							],
+							"path": [
+								"PROJECT_ID",
+								"tasks"
+							],
+							"query": [
+								{
+									"key": "is-active",
+									"value": "true",
+									"description": "If true, only active tasks will be returned, only finished tasks if false. If not provided all tasks are returned.",
+									"disabled": true
+								},
+								{
+									"key": "name",
+									"value": "some name",
+									"description": "If provided, tasks will be filtered by name",
+									"disabled": true
+								},
+								{
+									"key": "page",
+									"value": "1",
+									"disabled": true
+								},
+								{
+									"key": "page-size",
+									"value": "1000",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "RETRIEVE single task in project in workspace by task id",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{projectsBaseUrl}}/PROJECT_ID/tasks/TASK_ID",
+							"host": [
+								"{{projectsBaseUrl}}"
+							],
+							"path": [
+								"PROJECT_ID",
+								"tasks",
+								"TASK_ID"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "UPDATE task in project in workspace",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Probably all fields optional\",\n  \"assigneeIds\": [\"some assignee id\"],\n  \"estimate\": \"PT2H\",\n  \"billable\": false,\n  \"status\": \"DONE\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{projectsBaseUrl}}/PROJECT_ID/tasks/TASK_ID",
+							"host": [
+								"{{projectsBaseUrl}}"
+							],
+							"path": [
+								"PROJECT_ID",
+								"tasks",
+								"TASK_ID"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DELETE task in project in workspace",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{projectsBaseUrl}}/PROJECT_ID/tasks/TASK_ID",
+							"host": [
+								"{{projectsBaseUrl}}"
+							],
+							"path": [
+								"PROJECT_ID",
+								"tasks",
+								"TASK_ID"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Time entry",
+			"item": [
+				{
+					"name": "CREATE time entry for current user in workspace Copy",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"start\": \"2018-06-12T13:48:14.000Z\",\n  \"billable\": \"true\",\n  \"description\": \"Writing documentation\",\n  \"projectId\": \"5b1667790cb8797321f3d664\",\n  \"taskId\": \"5b1e6b160cb8793dd93ec120\",\n  \"end\": \"2018-06-12T13:50:14.000Z\",\n  \"tagIds\": [\n    \"5a7c5d2db079870147fra234\"\n  ],\n  \"customFields\": [\n    {\n      \"customFieldId\" : \"5b1e6b160cb8793dd93ec120\",\n      \"value\": \"San Francisco\"\n    }\n  ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{workspaceBaseUrl}}/time-entries",
+							"host": [
+								"{{workspaceBaseUrl}}"
+							],
+							"path": [
+								"time-entries"
+							]
+						},
+						"description": "If end is not sent in request means that stopwatch mode is active, otherwise time entry is manually added.\n\n'start' is the only mandatory field in this request."
+					},
+					"response": []
+				},
+				{
+					"name": "CREATE time entry for another user in workspace",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"start\": \"2018-06-12T13:48:14.000Z\",\n  \"billable\": \"true\",\n  \"description\": \"Writing documentation\",\n  \"projectId\": \"5b1667790cb8797321f3d664\",\n  \"taskId\": \"5b1e6b160cb8793dd93ec120\",\n  \"end\": \"2018-06-12T13:50:14.000Z\",\n  \"tagIds\": [\n    \"5a7c5d2db079870147fra234\"\n  ],\n  \"customFields\": [\n    {\n      \"customFieldId\" : \"5b1e6b160cb8793dd93ec120\",\n      \"value\": \"San Francisco\"\n    }\n  ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{workspaceBaseUrl}}/user/{{userId}}/time-entries",
+							"host": [
+								"{{workspaceBaseUrl}}"
+							],
+							"path": [
+								"user",
+								"{{userId}}",
+								"time-entries"
+							]
+						},
+						"description": "Adding time for others is a paid feature. This API endpoint works only for workspaces that have an active paid subscription.\n\nYou specify for which user you're adding time in the request's POST path.\n\nIf you leave out end time, you'll start a timer for that person. To stop the timer, you'll have to use the `PUT /workspaces/{workspaceId}/time-entries/{timeEntryId}/end` PATH (request example: `{\"end\":\"2019-02-07T14:00:07.000Z\"}`"
+					},
+					"response": []
+				},
+				{
+					"name": "RETRIEVE time entries for specific user in workspace",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{workspaceBaseUrl}}/user/{{userId}}/time-entries",
+							"host": [
+								"{{workspaceBaseUrl}}"
+							],
+							"path": [
+								"user",
+								"{{userId}}",
+								"time-entries"
+							],
+							"query": [
+								{
+									"key": "description",
+									"value": "some desc",
+									"description": "Filter time entries by description.",
+									"disabled": true
+								},
+								{
+									"key": "start",
+									"value": "2021-08-18T22:16:52.749Z",
+									"description": "Only return time entries starting after this datetime.",
+									"disabled": true
+								},
+								{
+									"key": "end",
+									"value": "2021-08-18T22:17:09.437Z",
+									"description": "Only return time entries starting before this datetime.",
+									"disabled": true
+								},
+								{
+									"key": "project",
+									"value": "PROJECT_ID",
+									"description": "Only return time entries from this project.",
+									"disabled": true
+								},
+								{
+									"key": "task",
+									"value": "TASK_ID",
+									"description": "Only return time entries from that task.",
+									"disabled": true
+								},
+								{
+									"key": "tags",
+									"value": "add,multiple,times",
+									"description": "Only return time entries with those tags.",
+									"disabled": true
+								},
+								{
+									"key": "project-required",
+									"value": "1",
+									"description": "Only return time entries attached to ANY project.",
+									"disabled": true
+								},
+								{
+									"key": "task-required",
+									"value": "1",
+									"description": "Only return time entries attached to ANY task.",
+									"disabled": true
+								},
+								{
+									"key": "consider-duration-format",
+									"value": "true",
+									"description": "Round returned time entries to minute/second based on workspace settings",
+									"disabled": true
+								},
+								{
+									"key": "hydrated",
+									"value": "true",
+									"description": "Resolve project, task and tag ids and return an object instead of the respective id. Field names change from (project/task/tag)id to project/task/tag.",
+									"disabled": true
+								},
+								{
+									"key": "in-progress",
+									"value": "true",
+									"description": "Ignore every other filter and return only in-progress tasks.",
+									"disabled": true
+								},
+								{
+									"key": "page",
+									"value": "1",
+									"disabled": true
+								},
+								{
+									"key": "page-size",
+									"value": "1000",
+									"disabled": true
+								}
+							]
+						},
+						"description": "Gets a time entry for specified user on workspace. Filters can be applied as query parameters listed below\n\nRequires WORKSPACE_OWN or WORKSPACE_ADMIN permissions to see other user's time entries."
+					},
+					"response": []
+				},
+				{
+					"name": "RETRIEVE single time entry in workspace by task id",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{workspaceBaseUrl}}/time-entries/",
+							"host": [
+								"{{workspaceBaseUrl}}"
+							],
+							"path": [
+								"time-entries",
+								""
+							],
+							"query": [
+								{
+									"key": "consider-duration-format",
+									"value": "true",
+									"description": "Round returned time entries to minute/second based on workspace settings",
+									"disabled": true
+								},
+								{
+									"key": "hydrated",
+									"value": "true",
+									"description": "Resolve project, task and tag ids and return an object instead of the respective id. Field names change from (project/task/tag)id to project/task/tag.",
+									"disabled": true
+								}
+							]
+						},
+						"description": "If end is not sent in request means that stopwatch mode is active, otherwise time entry is manually added.\n\n'start' is the only mandatory field in this request."
+					},
+					"response": []
+				},
+				{
+					"name": "UPDATE time entry in workspace",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"start\": \"2018-06-12T14:00:37Z\",\n  \"billable\": \"true\",\n  \"description\": \"Writing documentation updated\",\n  \"projectId\": \"5b1667790cb8797321f3d664\",\n  \"taskId\": \"5b1e6b160cb8793dd93ec120\",\n  \"end\": \"2018-06-12T14:01:41Z\",\n  \"tagIds\": [\n    \"5a7c5d2db079870147fra234\"\n  ],\n  \"customFields\": [\n    {\n      \"customFieldId\" : \"5b1e6b160cb8793dd93ec120\",\n      \"timeEntryId\" : \"5c5bda4fb079871c518b6f07\",\n      \"value\": \"San Francisco\"\n    }\n  ]\n}\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{workspaceBaseUrl}}/time-entries/ENTRY_ID",
+							"host": [
+								"{{workspaceBaseUrl}}"
+							],
+							"path": [
+								"time-entries",
+								"ENTRY_ID"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DELETE task in project in workspace",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{workspaceBaseUrl}}/time-entries/ENTRY_ID",
+							"host": [
+								"{{workspaceBaseUrl}}"
+							],
+							"path": [
+								"time-entries",
+								"ENTRY_ID"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "STOP currently running timer for user in workspace",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"timeEstimate\": {\n    \"estimate\": \"PT1H0M0S\",\n    \"type\": \"MANUAL\",\n    \"active\": false,\n    \"resetOption\": \"MONTHLY\"\n  },\n  \"budgetEstimate\": {\n    \"estimate\": 1100,\n    \"type\": \"MANUAL\",\n    \"active\": true,\n    \"resetOption\": null\n  }\n}\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{workspaceBaseUrl}}/user/USER_ID/time-entries",
+							"host": [
+								"{{workspaceBaseUrl}}"
+							],
+							"path": [
+								"user",
+								"USER_ID",
+								"time-entries"
+							]
+						},
+						"description": "Admins can stop someone else's running timers on paid workspaces (Add time for others feature).\n\nIf workspace has a required field enabled (eg. the Timesheet is enabled and project is a required field as a result), you won't be able to stop the timer until you fill in the required field(s). You'll simply get \"Entity not created\" message."
+					},
+					"response": []
+				},
+				{
+					"name": "MARK time entries as invoiced",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"timeEntryIds\": [\"5a7c5d2db079870147fra134\"],\n  \"invoiced\" : true\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{workspaceBaseUrl}}/time-entries/invoiced",
+							"host": [
+								"{{workspaceBaseUrl}}"
+							],
+							"path": [
+								"time-entries",
+								"invoiced"
+							]
+						},
+						"description": "Admins can stop someone else's running timers on paid workspaces (Add time for others feature).\n\nIf workspace has a required field enabled (eg. the Timesheet is enabled and project is a required field as a result), you won't be able to stop the timer until you fill in the required field(s). You'll simply get \"Entity not created\" message."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "User",
+			"item": [
+				{
+					"name": "ADD user to workspace",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"example@email.com\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{workspaceBaseUrl}}/users",
+							"host": [
+								"{{workspaceBaseUrl}}"
+							],
+							"path": [
+								"users"
+							]
+						},
+						"description": "You can add users to a workspace via API only if that workspace has a paid subscription. If the workspace has a paid subscription, you can add as many users as you want but you are limited by the number of paid user seats on that workspace."
+					},
+					"response": []
+				},
+				{
+					"name": "RETRIEVE logged-in users's info",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{clockifyUrl}}/user",
+							"host": [
+								"{{clockifyUrl}}"
+							],
+							"path": [
+								"user"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "RETRIEVE all users on workspace",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{workspaceBaseUrl}}/users",
+							"host": [
+								"{{workspaceBaseUrl}}"
+							],
+							"path": [
+								"users"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1",
+									"disabled": true
+								},
+								{
+									"key": "page-size",
+									"value": "1000",
+									"disabled": true
+								},
+								{
+									"key": "membership",
+									"value": "*ALL* | WORKSPACE | PROJECT | USERGROUP | NONE",
+									"description": "If provided, you'll get all users along with what workspace, groups, or projects they have access to. Possible values: WORKSPACE, PROJECT, USERGROUP, ALL (default), NONE (only get basic data about users on the workpace).",
+									"disabled": true
+								},
+								{
+									"key": "email",
+									"value": "me@mail.com",
+									"description": "If provided, you'll get a filtered list of users that contain the provided string in their email address.",
+									"disabled": true
+								},
+								{
+									"key": "projectId",
+									"value": "PROJECT_ID",
+									"description": "If provided, you'll get a list of users that have access to the project.",
+									"disabled": true
+								},
+								{
+									"key": "name",
+									"value": "my name",
+									"description": "If provided, you'll get a filtered list of users that contain the provided string in their name.",
+									"disabled": true
+								},
+								{
+									"key": "status",
+									"value": "PENDING | ACTIVE | DECLINED | INACTIVE",
+									"description": "If provided, you'll get a filtered list of users with the corresponding status. Possible values: PENDING, ACTIVE, DECLINED, INACTIVE",
+									"disabled": true
+								},
+								{
+									"key": "sort-column",
+									"value": "EMAIL | NAME | HOURLYRATE",
+									"disabled": true
+								},
+								{
+									"key": "sort-order",
+									"value": "ASCENDING | DESCENDING",
+									"disabled": true
+								},
+								{
+									"key": "includeRoles",
+									"value": "true",
+									"description": "If you pass along includeRoles=true, you'll get each user's detailed manager role (including projects and members for whome they're managers)",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "UPDATE user's workspace status",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"membershipStatus\": \"INACTIVE\" (ACTIVE, INACTIVE)\n}\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{workspaceBaseUrl}}/users/{{userId}}",
+							"host": [
+								"{{workspaceBaseUrl}}"
+							],
+							"path": [
+								"users",
+								"{{userId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DELETE user from workspace",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{workspaceBaseUrl}}/users/{{userId}}",
+							"host": [
+								"{{workspaceBaseUrl}}"
+							],
+							"path": [
+								"users",
+								"{{userId}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Workspace",
+			"item": [
+				{
+					"name": "RETRIEVE all my workspaces",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{workspacesBaseUrl}}",
+							"host": [
+								"{{workspacesBaseUrl}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"auth": {
+		"type": "apikey",
+		"apikey": [
+			{
+				"key": "value",
+				"value": "{{apiKey}}",
+				"type": "string"
+			},
+			{
+				"key": "key",
+				"value": "X-Api-Key",
+				"type": "string"
+			},
+			{
+				"key": "in",
+				"value": "header",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "clockifyUrl",
+			"value": "https://api.clockify.me/api/v1"
+		},
+		{
+			"key": "reportsUrl",
+			"value": "https://reports.api.clockify.me/v1"
+		},
+		{
+			"key": "workspacesBaseUrl",
+			"value": "{{clockifyUrl}}/workspaces"
+		},
+		{
+			"key": "workspaceBaseUrl",
+			"value": "{{workspacesBaseUrl}}/{{workspaceId}}"
+		},
+		{
+			"key": "projectsBaseUrl",
+			"value": "{{workspaceBaseUrl}}/projects"
+		},
+		{
+			"key": "clientsBaseUrl",
+			"value": "{{workspaceBaseUrl}}/clients"
+		},
+		{
+			"key": "tagsBaseUrl",
+			"value": "{{workspaceBaseUrl}}/tags"
+		},
+		{
+			"key": "groupsBaseUrl",
+			"value": "{{workspaceBaseUrl}}/user-groups"
+		},
+		{
+			"key": "userId",
+			"value": "USER_ID"
+		}
+	]
+}
