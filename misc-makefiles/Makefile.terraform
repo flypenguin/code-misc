@@ -35,8 +35,13 @@ refresh:
 .PHONY: refresh
 
 quick:
+	@clear
+	@echo -e "\033[1;33m# ################################################################"
+	@echo -e "# terraform plan           \033[1;31m! QUICK !\033[1;33m           $$(date "+%Y-%m-%d %H:%M:%S")\n\033[0m"
+	@test -f settings-secret.sh && source settings-secret.sh ; \
 	test -f settings-secret.sh && source settings-secret.sh ; \
 	terraform plan -out=terraform.plan -refresh=false
+	@echo -e "\n\n\033[1;34mDone. Run 'make apply' to apply changes.\033[0m\n"
 .PHONY: quick
 
 quick-plan: quick
@@ -46,9 +51,12 @@ plan-quick: quick
 .PHONY: plan-quick
 
 plan:
-	test -f settings-secret.sh && source settings-secret.sh ; \
+	@clear
+	@echo -e "\033[1;33m# ################################################################"
+	@echo -e "# terraform plan                               $$(date "+%Y-%m-%d %H:%M:%S")\n\033[0m"
+	@test -f settings-secret.sh && source settings-secret.sh ; \
 	terraform plan -out=terraform.plan
-	@echo -e "\n\nDone. Run 'make apply' to apply changes.\n"
+	@echo -e "\n\n\033[1;34mDone. Run 'make apply' to apply changes.\033[0m\n"
 .PHONY: plan
 
 test: plan
@@ -82,21 +90,19 @@ push:
 .PHONY: push
 
 init:
-	test -f settings-secret.sh && source settings-secret.sh ; \
-	set -x ; \
-	terraform init --backend-config=./backend-config ; \
+	@test -f settings-secret.sh && source settings-secret.sh ; \
+	[ -f backend-config ] && USE_BACKEND="--backend-config=./backend-config" || echo -e "\n\n**** WARNING: No backend-config found. Continuing anyway. **** \n\n" ; \
+	terraform init $${USE_BACKEND} ; \
 
 .PHONY: init
 
 new:
-	@read -p "Abteilung [it]:       " DEPARTMENT ; \
-	read -p  "Projekt / Gegenstand: " SUBJECT ; \
-	DEPARTMENT=$${DEPARTMENT:-it} ; \
+	@read -p  "Unterprojekt: " SUBJECT ; \
 	if [ -z "$$SUBJECT" ] ; then \
 	  echo "Abbruch." ; \
 	  exit -1 ; \
 	fi ; \
-	NEW_PROJECT="pkd_$${DEPARTMENT}_$${SUBJECT}" ; \
+	NEW_PROJECT="$${SUBJECT}" ; \
 	NEW_PROJECT=$$(echo $$NEW_PROJECT | tr '[:upper:]' '[:lower:]') ; \
 	if [ -d "$$NEW_PROJECT" ] ; then \
 	  echo "ERROR: $$NEW_PROJECT existiert bereits. Abbruch." ; \
@@ -108,7 +114,7 @@ new:
 	sed -i "s/PROJECTNAME/$$NEW_PROJECT/g" backend-config ; \
 	echo "Verzeichnis $$NEW_PROJECT angelegt." ; \
 	echo "Nächste Schritte: In diesem Verzeichnis ..." ; \
-	echo "  * die Datei 'settings-secret.sh' anpassen" ; \
+	echo "  * die Datei 'settings-secret.sh' anpassen falls nötig" ; \
 	echo "  * 'make init' ausführen" ; \
 	echo "  * 'make plan' ausführen" ; \
     echo "Fertig."
@@ -117,8 +123,90 @@ new:
 
 
 #
+# secret management
+#
+
+open:
+	find . -iname "*.gpg" | while read GPG_FILE ; do \
+	    UNSAFE_FILE=$${GPG_FILE%.gpg} ; \
+	    gpg -d "$$GPG_FILE" > "$$UNSAFE_FILE"; \
+	    chmod 600 "$$UNSAFE_FILE" ; \
+	    touch -r "$$GPG_FILE" "$$UNSAFE_FILE" ; \
+	done
+.PHONY: open
+.SILENT: open
+
+clean-gpg:
+	find . -iname "*.gpg" | while read GPG_FILE ; do \
+	    DELETE_ME=$${GPG_FILE%.gpg} ; \
+	    rm -rfv "$$DELETE_ME";  \
+	done
+	for EXT in key sec ; do \
+	    find . -iname "*.$$EXT" | while read DELETE_ME ; do \
+	        rm -rfv "$$DELETE_ME";  \
+	    done \
+	done
+.PHONY: clean-gpg
+.SILENT: clean-gpg
+
+close: clean
+.PHONY: close
+
+# https://security.stackexchange.com/a/86751
+reencrypt:
+	REPO_ROOT=$$(realpath --relative-to=. $$(git rev-parse --show-toplevel)) ; \
+	RECIPIENTS="" ; \
+	for RECIPIENT in "$$REPO_ROOT/gpg_keys/"* ; do \
+	    RECIPIENTS="$$RECIPIENTS -f $$RECIPIENT" ; \
+	done ; \
+	find . -iname "*.gpg" | while read GPG_FILE ; do \
+	    UNSAFE_FILE=$${GPG_FILE%.gpg} ; \
+		if [ "$$UNSAFE_FILE" -nt "$$GPG_FILE" ] ; then \
+	        echo "** UPDATING $$GPG_FILE" ; \
+			gpg --yes -e $$RECIPIENTS "$$UNSAFE_FILE" ; \
+	    else \
+		    echo "-  skipping $$GPG_FILE" ; \
+	    fi ; \
+	done
+.PHONY: reencrypt
+.SILENT: reencrypt
+
+# https://security.stackexchange.com/a/86751
+reencrypt-force:
+	REPO_ROOT=$$(realpath --relative-to=. $$(git rev-parse --show-toplevel)) ; \
+	RECIPIENTS="" ; \
+	for RECIPIENT in "$$REPO_ROOT/gpg_keys/"* ; do \
+	    RECIPIENTS="$$RECIPIENTS -f $$RECIPIENT" ; \
+	done ; \
+	find . -iname "*.gpg" | while read GPG_FILE ; do \
+	    UNSAFE_FILE=$${GPG_FILE%.gpg} ; \
+		echo "** UPDATING $$GPG_FILE" ; \
+		gpg --yes -e $$RECIPIENTS "$$UNSAFE_FILE" ; \
+	done
+.PHONY: reencrypt-force
+.SILENT: reencrypt-force
+
+
+update-backends:
+	REPO_ROOT=$$(realpath --relative-to=. $$(git rev-parse --show-toplevel)) ; \
+	echo "Really replace all backend-config files in all subdirs? (CTRL-C to abort)" ; \
+	read ; \
+	for subdir in * ; do \
+	  if [ -f "$$subdir/backend-config" ] ; then \
+	    [ "$$subdir" == "_project_template" ] && continue ; \
+		echo "UPDATING: $$subdir" ; \
+	    cp _project_template/backend-config "$$subdir/backend-config" ; \
+	    sed -i "s/PROJECTNAME/$$subdir/g" "$$subdir/backend-config" ; \
+	  fi ; \
+	done
+.PHONY: update-backends
+.SILENT: update-backends
+
+
+
+#
 # combined targets
 #
 
-clean: clean-tf
+clean: clean-tf clean-gpg
 .PHONY: clean
