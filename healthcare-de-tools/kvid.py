@@ -6,6 +6,7 @@
 
 from random import randint
 from argparse import ArgumentParser
+from sys import exit
 
 
 config = None
@@ -16,7 +17,6 @@ int_0 = ord("0")
 def gen_checksum(kvnr: str) -> int:
     assert len(kvnr) == 9
     # convert "E12..." to "0512..." ("E" -> "05")
-    int_0 = ord("0")
     letter_code = ord(kvnr[0]) - ord("A") + 1  # 1, 2, ... 26
     converted_str = f"{letter_code:02}{kvnr[1:]}"
     # calculate checksum
@@ -64,3 +64,4 @@ if __name__ == "__main__":
             print(
                 f"Invalid KV ID. Checksum should be '{check_should}', is: '{check_is}'"
             )
+            exit(-1)
