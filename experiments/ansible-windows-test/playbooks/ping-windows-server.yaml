@@ -1,0 +1,7 @@
+---
+- name: update win0 server
+  hosts: win0
+
+  tasks:
+    - name: ping
+      ping: category_names

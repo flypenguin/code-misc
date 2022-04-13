@@ -5,6 +5,10 @@ secret_*
 .local.*
 local_*
 local-*
+id_rsa*
+!id_rsa*.pub
+!id_rsa*.gpg
+!id_rsa*.asc
 
 # .env files also seem to be a good idea.
 .env
@@ -21,6 +25,7 @@ tmp-*/
 tmp_*/
 *.tmp
 *.temp
+*.backup
 
 # Created by https://www.toptal.com/developers/gitignore/api/osx
 # Edit at https://www.toptal.com/developers/gitignore?templates=osx

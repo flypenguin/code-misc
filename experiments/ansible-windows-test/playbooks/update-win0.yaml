@@ -1,0 +1,7 @@
+---
+- name: update win0 server
+  hosts: win0
+
+  tasks:
+    - name: apply updates
+      win_updates: category_names
