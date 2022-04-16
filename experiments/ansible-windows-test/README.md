@@ -53,6 +53,7 @@ Domain Services installed. Other settings below.
 
 # Links
 
+- https://www.jonathanmedd.net/2019/09/ansible-windows-and-powershell-the-basics-introduction.html
 - https://github.com/PacktPublishing/Ansible-Quick-Start-Guide/blob/master/Chapter04/Ansible_Windows_Modules/Readme.md
 - https://argonsys.com/microsoft-cloud/articles/configuring-ansible-manage-windows-servers-step-step/
 
@@ -61,3 +62,9 @@ Specific for Windows updates:
 - https://www.lagerhaus128.ch/?p=941
 - https://4sysops.com/archives/automate-windows-updates-with-ansible/
 - https://www.ansible.com/blog/windows-updates-and-ansible
+- https://aptic.ch/ein-problem-weniger-vollautomatisches-windows-server-patching-mit-ansible/
+- https://docs.ansible.com/ansible/latest/collections/community/windows/win_hotfix_module.html
+
+VMware:
+
+- https://docs.ansible.com/ansible/latest/collections/community/vmware/index.html

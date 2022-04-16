@@ -7,7 +7,7 @@
 - name: install an update
   hosts: win-srv
   tasks:
-    - name: search for updates
+    - name: install an update
       win_updates:
         category_names: "*"
         reboot: no
@@ -18,12 +18,14 @@
 
     - name: print variable
       debug:
-        msg: "{{ win_updates }}"
+        msg: "installed_update_count: {{ win_updates.installed_update_count }} // reboot_required: {{ win_updates.reboot_required }}"
 
     # reboot machine if updates were applied
     - name: reboot machine on applied updates
       win_reboot: # this has no parameters ...
       when: win_updates.installed_update_count > 0
+      # this SHOULD be used
+      #when: win_updates.installed_update_count > 0 && win_updates.reboot_required
 
     - name: Wait default 300 seconds for port 3389 to become open, don't start checking for 15 seconds
       win_wait_for:
@@ -34,7 +36,7 @@
 - name: now the same with win1
   hosts: win1
   tasks:
-    - name: search for updates
+    - name: install an update
       win_updates:
         category_names: "*"
         reboot: no
@@ -45,10 +47,17 @@
 
     - name: print variable
       debug:
-        msg: "{{ win_updates }}"
+        msg: "installed_update_count: {{ win_updates.installed_update_count }} // reboot_required: {{ win_updates.reboot_required }}"
 
     # reboot machine if updates were applied
     - name: reboot machine on applied updates
       win_reboot: # this has no parameters ...
+      when: win_updates.installed_update_count > 0
+      # this SHOULD be used
+      #when: win_updates.installed_update_count > 0 && win_updates.reboot_required
 
+    - name: Wait default 300 seconds for port 3389 to become open, don't start checking for 15 seconds
+      win_wait_for:
+        port: 3389
+        delay: 15
       when: win_updates.installed_update_count > 0
