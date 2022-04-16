@@ -1,0 +1,24 @@
+---
+- hosts: win_servers
+  tasks:
+    - name: search for windows updates
+      win_updates:
+        category_names:
+          - Application
+          - Connectors
+          - CriticalUpdates
+          - DefinitionUpdates
+          - DeveloperKits
+          - FeaturePacks
+          - Guidance
+          - SecurityUpdates
+          - ServicePacks
+          - Tools
+          - UpdateRollups
+          - Updates
+        reboot: no
+        state: searched
+      register: win_updates
+    - name: print variable
+      debug:
+        msg: "{{ win_updates }}"

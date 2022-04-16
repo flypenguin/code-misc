@@ -1,0 +1,11 @@
+---
+# https://argonsys.com/microsoft-cloud/articles/configuring-ansible-manage-windows-servers-step-step/
+# https://docs.ansible.com/ansible/latest/dev_guide/developing_modules_general_windows.html
+
+- hosts: win_servers
+  tasks:
+    - name: simple powershell module example to get Windows OS version
+      get_version:
+        major: "5"
+        minor: "1"
+        build: "17763"

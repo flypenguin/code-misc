@@ -1,0 +1,18 @@
+---
+# https://docs.ansible.com/ansible/latest/collections/ansible/windows/index.html
+- hosts: win_servers
+  tasks:
+    - name: "create C:\\temp"
+      win_file:
+        path: "c:\\temp"
+        state: directory
+
+    - name: Download 7z installer
+      win_get_url:
+        url: https://www.7-zip.org/a/7z2107-x64.msi
+        dest: "C:\\temp\\7z2107-x64.msi"
+
+    - name: Install MSI
+      win_package:
+        path: "C:\\temp\\7z2107-x64.msi"
+        state: present

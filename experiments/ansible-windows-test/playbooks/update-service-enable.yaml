@@ -1,0 +1,8 @@
+---
+- hosts: win_servers
+  tasks:
+    - name: Enable windows update service
+      ansible.windows.win_service:
+        name: wuauserv
+        start_mode: auto
+        state: started

@@ -1,0 +1,9 @@
+---
+# https://chocolatey.org/
+# https://docs.ansible.com/ansible/latest/collections/chocolatey/chocolatey/win_chocolatey_module.html
+- hosts: win_servers
+  tasks:
+    - name: Install Notepad++
+      win_chocolatey:
+        name: notepadplusplus
+        state: present

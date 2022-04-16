@@ -1,0 +1,54 @@
+---
+# THIS IS NOT HOW TO DO IT!
+# THIS IS JUST A PROOF-OF-CONCEPT!
+
+# NOTE:
+# update service must be running for this!
+- name: install an update
+  hosts: win-srv
+  tasks:
+    - name: search for updates
+      win_updates:
+        category_names: "*"
+        reboot: no
+        state: installed
+        accept_list:
+          - 4052623
+      register: win_updates
+
+    - name: print variable
+      debug:
+        msg: "{{ win_updates }}"
+
+    # reboot machine if updates were applied
+    - name: reboot machine on applied updates
+      win_reboot: # this has no parameters ...
+      when: win_updates.installed_update_count > 0
+
+    - name: Wait default 300 seconds for port 3389 to become open, don't start checking for 15 seconds
+      win_wait_for:
+        port: 3389
+        delay: 15
+      when: win_updates.installed_update_count > 0
+
+- name: now the same with win1
+  hosts: win1
+  tasks:
+    - name: search for updates
+      win_updates:
+        category_names: "*"
+        reboot: no
+        state: installed
+        accept_list:
+          - 4052623
+      register: win_updates
+
+    - name: print variable
+      debug:
+        msg: "{{ win_updates }}"
+
+    # reboot machine if updates were applied
+    - name: reboot machine on applied updates
+      win_reboot: # this has no parameters ...
+
+      when: win_updates.installed_update_count > 0
