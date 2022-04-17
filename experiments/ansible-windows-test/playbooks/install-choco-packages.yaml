@@ -1,0 +1,9 @@
+---
+# https://docs.ansible.com/ansible/latest/collections/ansible/windows/index.html
+- hosts: win_servers
+  tasks:
+    - name: Install predefined choco packages
+      win_chocolatey:
+        name: "{{ item }}"
+        state: present
+      loop: "{{ choco_packages_install }}"

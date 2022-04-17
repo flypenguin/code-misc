@@ -1,0 +1,26 @@
+---
+choco_packages_install:
+  - sysinternals
+
+kb_updates_install:
+  - KB4052623 # Windows Malicious Software Removal Tool x64 - v5.98 & v5.100
+  - KB2267602 # Security intelligence updates for Microsoft Defender
+  - KB890830 # Windows defender Update, probably included in KB2267602
+
+  # KB4589208: Intel-Mikrocodeupdates für Windows 10, Version 1809 und Windows Server 2019
+  # 2021-01 Update für Windows Server 2019 für x64-basierte Systeme (KB4589208)
+  - KB4589208
+
+  - KB5012128 # Security Update for .NET framework (70+ MB)
+  - KB4535680 # Sicherheitsupdate für Windows Server 2019 für x64-basierte Systeme (KB4535680) (200+ KB)
+
+# BE AWARE:
+#  - KB5012647 # Cumulative Update for Windows Server 2019 (1809) for x64-based Systems (500+ MB)
+#  - KB5012328 # Cumulative Update for .NET Framework 3.5, 4.7.2 and 4.8 for Windows Server 2019 (150+ MB)
+
+kb_updates_blacklist: []
+
+force_reboot_after_updates: true
+
+kb_hotfix_package_mappings:
+  KB4535680: Package_for_KB4535680~31bf3856ad364e35~amd64~~10.0.1.0

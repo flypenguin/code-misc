@@ -1,0 +1,82 @@
+---
+- name: install an update
+  win_updates:
+    category_names: "*"
+    reboot: no
+    state: installed
+    accept_list: "{{ kb_updates_install }}"
+    reject_list: "{{ kb_updates_blacklist }}"
+  register: win_updates
+
+- name: win_updates
+  debug:
+    var: win_updates
+
+- name: installed update count
+  debug:
+    msg: "installed_update_count: {{ win_updates.installed_update_count }} // reboot_required: {{ win_updates.reboot_required }}"
+
+- name: installed updates
+  debug:
+    msg: "{{ win_updates.updates | map(attribute='title') }}"
+
+- name: remove blacklisted updates which got installed accidently
+  win_hotfix:
+    hotfix_identifier: "{{ kb_hotfix_package_mappings[item] }}"
+    #hotfix_kb: "{{ item }}"
+    state: absent
+  register: win_updates_removed
+  loop: "{{ kb_updates_blacklist }}"
+
+#- name: removed updates
+#  debug:
+#    var: win_updates_removed
+#  when: win_updates_removed is defined
+
+- name: generate reboot_required list from removed hotfixes
+  ansible.builtin.set_fact:
+    # generates a list of booleans: [False, False, True, False, ...]
+    win_updates_removed_reboot: "{{ win_updates_removed.results | map(attribute='reboot_required') }}"
+  # the list is generated cause we "loop": https://is.gd/ldDBlO
+  loop: "{{ kb_updates_blacklist }}"
+  when: win_updates_removed is defined and 'results' in win_updates_removed
+
+- name: generate changed list from removed hotfixes
+  ansible.builtin.set_fact:
+    # generates a list of booleans: [False, False, True, False, ...]
+    win_updates_removed_changed: "{{ win_updates_removed.results | map(attribute='changed') }}"
+  # the list is generated cause we "loop": https://is.gd/ldDBlO
+  loop: "{{ kb_updates_blacklist }}"
+  when: win_updates_removed is defined and 'results' in win_updates_removed
+
+#- name: removed updates reboot required
+#  debug:
+#    var: win_updates_removed_reboot
+#  when: win_updates_removed_reboot is defined
+
+#- name: removed updates changed
+#  debug:
+#    var: win_updates_removed_changed
+#  when: win_updates_removed_changed is defined
+
+# reboot machine if updates were applied
+- name: reboot machine on applied updates
+  block:
+    - name: reboot machine
+      win_reboot: # this has no parameters ...
+    # Wait default 300 seconds for port 3389 to become open, don't start checking for 15 seconds
+
+    - name: Wait until machine comes back (port 3389 reachable)
+      win_wait_for:
+        port: 3389
+        delay: 15
+      when: win_updates.installed_update_count > 0
+
+  when: >
+    force_reboot_after_updates and win_updates is defined and win_updates.installed_update_count
+    or
+    force_reboot_after_updates and win_updates is defined and win_updates_removed_changed is any
+    or
+    win_updates is defined and win_updates.reboot_required
+    or
+    win_updates_removed_reboot is defined and win_updates_removed_reboot is any

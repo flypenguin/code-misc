@@ -1,0 +1,9 @@
+---
+- name: use win_hotfix to install / retract hotfix modules
+  hosts: win_servers
+  tasks:
+    - name: install win_hotfix modules
+      win_hotfix:
+        hotfix_kb: "{{ item }}"
+      # https://docs.ansible.com/ansible/latest/user_guide/playbooks_loops.html#comparing-loop-and-with
+      loop: "{{ kb_updates | difference(kb_updates_blacklist) }}"

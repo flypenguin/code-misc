@@ -4,60 +4,12 @@
 
 # NOTE:
 # update service must be running for this!
-- name: install an update
+- name: install updates and reboot if necessary
   hosts: win-srv
   tasks:
-    - name: install an update
-      win_updates:
-        category_names: "*"
-        reboot: no
-        state: installed
-        accept_list:
-          - 4052623
-      register: win_updates
+    - include_tasks: tasks/update_and_reboot.yaml
 
-    - name: print variable
-      debug:
-        msg: "installed_update_count: {{ win_updates.installed_update_count }} // reboot_required: {{ win_updates.reboot_required }}"
-
-    # reboot machine if updates were applied
-    - name: reboot machine on applied updates
-      win_reboot: # this has no parameters ...
-      when: win_updates.installed_update_count > 0
-      # this SHOULD be used
-      #when: win_updates.installed_update_count > 0 && win_updates.reboot_required
-
-    - name: Wait default 300 seconds for port 3389 to become open, don't start checking for 15 seconds
-      win_wait_for:
-        port: 3389
-        delay: 15
-      when: win_updates.installed_update_count > 0
-
-- name: now the same with win1
+- name: install updates and reboot if necessary
   hosts: win1
   tasks:
-    - name: install an update
-      win_updates:
-        category_names: "*"
-        reboot: no
-        state: installed
-        accept_list:
-          - 4052623
-      register: win_updates
-
-    - name: print variable
-      debug:
-        msg: "installed_update_count: {{ win_updates.installed_update_count }} // reboot_required: {{ win_updates.reboot_required }}"
-
-    # reboot machine if updates were applied
-    - name: reboot machine on applied updates
-      win_reboot: # this has no parameters ...
-      when: win_updates.installed_update_count > 0
-      # this SHOULD be used
-      #when: win_updates.installed_update_count > 0 && win_updates.reboot_required
-
-    - name: Wait default 300 seconds for port 3389 to become open, don't start checking for 15 seconds
-      win_wait_for:
-        port: 3389
-        delay: 15
-      when: win_updates.installed_update_count > 0
+    - include_tasks: tasks/update_and_reboot.yaml

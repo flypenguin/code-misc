@@ -59,12 +59,14 @@ Domain Services installed. Other settings below.
 
 Specific for Windows updates:
 
+- https://www.catalog.update.microsoft.com/Search.aspx?q=Server+2019
 - https://www.lagerhaus128.ch/?p=941
 - https://4sysops.com/archives/automate-windows-updates-with-ansible/
 - https://www.ansible.com/blog/windows-updates-and-ansible
 - https://aptic.ch/ein-problem-weniger-vollautomatisches-windows-server-patching-mit-ansible/
 - https://docs.ansible.com/ansible/latest/collections/community/windows/win_hotfix_module.html
-
+- https://www.bleepingcomputer.com/news/microsoft/how-to-get-a-list-of-installed-windows-10-updates/
+-
 VMware:
 
 - https://docs.ansible.com/ansible/latest/collections/community/vmware/index.html

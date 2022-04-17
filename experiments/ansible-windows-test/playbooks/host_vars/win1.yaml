@@ -1,0 +1,13 @@
+---
+kb_updates_blacklist:
+  # - KB890830 # Windows defender Update, probably included in KB2267602
+  # - KB2267602 # Security intelligence updates for Microsoft Defender
+  #
+  # - KB5012128 # Security Update for .NET framework (70+ MB)
+  # - KB4535680 # Sicherheitsupdate für Windows Server 2019 für x64-basierte Systeme (KB4535680) (200+ KB)
+
+  # KB4589208: Intel-Mikrocodeupdates für Windows 10, Version 1809 und Windows Server 2019
+  # 2021-01 Update für Windows Server 2019 für x64-basierte Systeme (KB4589208)
+  #- KB4589208
+
+  - KB4535680 # Sicherheitsupdate für Windows Server 2019 für x64-basierte Systeme (KB4535680) (200+ KB)
