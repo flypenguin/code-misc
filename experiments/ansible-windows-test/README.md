@@ -1,5 +1,18 @@
 # Ansible Windows Readme
 
+## TL;DR - demo commands
+
+```bash
+# install some software
+ansible-playbook playbooks/install-7zip-msi.yaml -l win1
+ansible-playbook playbooks/install-notepadplusplus-choco.yaml -l win-srv
+
+# demo a powershell module
+ansible-playbook playbooks/test-powershell-module.yaml
+
+# update things - the piece de resistance :)
+ansible-playbook playbooks/update-cascaded-reboot.yaml       # for all hosts
+```
 
 ## Ansible config
 
