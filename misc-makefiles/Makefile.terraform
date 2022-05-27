@@ -2,211 +2,203 @@
 #   ARM_ACCESS_KEY="..."
 
 
-SHELL := /bin/bash
+SHELL := bash
+TF_CMD := terraform
+TF_DOCKER_IMAGE := hashicorp/terraform
+TF_DOCKER_IMAGE_VER := 1.2.0
+TF_DOCKER_SCRIPT_NAME := _tf_docker.tmp
 
-all: plan
+
 .PHONY: all
+all: plan
 
+.PHONY: test
+test: plan
+
+.PHONY: do
+do: apply
+
+.PHONY: ashes
+ashes: destroy
+
+.PHONY: clean
+clean:
+	-rm *.plan 2>/dev/null; true
+
+
+.PHONY: init
+init:
+	$(TF_CMD) init
+
+.PHONY: quick
+quick:
+	@clear -x
+	@echo -e "\033[1;33m# ################################################################"
+	@echo -e "# terraform plan          \033[1;31m!! QUICK !!\033[1;33m          $$(date "+%Y-%m-%d %H:%M:%S")\n\033[0m"
+	$(TF_CMD) plan -out=terraform.plan -refresh=false
+	@echo -e "\n\n\033[1;34mDone. Run 'make apply' to apply changes.\033[0m\n"
+
+.PHONY: plan
+plan:
+	@clear -x
+	@echo -e "\033[1;33m# ################################################################"
+	@echo -e "# terraform plan                               $$(date "+%Y-%m-%d %H:%M:%S")\n\033[0m"
+	$(TF_CMD) plan -out=terraform.plan
+	@echo -e "\n\n\033[1;34mDone. Run 'make apply' to apply changes.\033[0m\n"
+
+.PHONY: apply
+apply:
+	$(TF_CMD) apply terraform.plan ; \
+	rm -f terraform.plan
+
+.PHONY: both
+both: plan do
+	rm -f terraform.plan ; \
+	$(TF_CMD) apply -auto-approve
+
+.PHONY: qboth
+qboth:
+	rm -f terraform.plan ; \
+	$(TF_CMD) apply -refresh=false -auto-approve
+
+.PHONY: destroy
+destroy:
+	$(TF_CMD) destroy
+
+.PHONY: unlock
 unlock:
 	@test -f settings-secret.sh && source settings-secret.sh ; \
 	rm -f terraform.plan ; \
-	echo -n "LOCK ID: " ; read LOCK_ID ; terraform force-unlock -force $$LOCK_ID
-.PHONY: unlock
+	echo -n "LOCK ID: " ; read LOCK_ID ; \
+	$(TF_CMD) force-unlock -force $$LOCK_ID
 
-both:
-	@test -f settings-secret.sh && source settings-secret.sh ; \
-	rm -f terraform.plan ; \
-	terraform apply -auto-approve
-.PHONY: both
-
-qboth:
-	@test -f settings-secret.sh && source settings-secret.sh ; \
-	rm -f terraform.plan ; \
-	terraform apply -refresh=false -auto-approve
-.PHONY: qboth
-
-clean-tf:
-	-rm *.plan *.zip 2>/dev/null; true
-.PHONY: clean-tf
-
-refresh:
-	@test -f settings-secret.sh && source settings-secret.sh ; \
-	terraform refresh
 .PHONY: refresh
+refresh:
+	$(TF_CMD) refresh
 
-quick:
-	@clear
-	@echo -e "\033[1;33m# ################################################################"
-	@echo -e "# terraform plan           \033[1;31m! QUICK !\033[1;33m           $$(date "+%Y-%m-%d %H:%M:%S")\n\033[0m"
-	@test -f settings-secret.sh && source settings-secret.sh ; \
-	test -f settings-secret.sh && source settings-secret.sh ; \
-	terraform plan -out=terraform.plan -refresh=false
-	@echo -e "\n\n\033[1;34mDone. Run 'make apply' to apply changes.\033[0m\n"
-.PHONY: quick
-
-quick-plan: quick
-.PHONY: quick-plan
-
-plan-quick: quick
-.PHONY: plan-quick
-
-plan:
-	@clear
-	@echo -e "\033[1;33m# ################################################################"
-	@echo -e "# terraform plan                               $$(date "+%Y-%m-%d %H:%M:%S")\n\033[0m"
-	@test -f settings-secret.sh && source settings-secret.sh ; \
-	terraform plan -out=terraform.plan
-	@echo -e "\n\n\033[1;34mDone. Run 'make apply' to apply changes.\033[0m\n"
-.PHONY: plan
-
-test: plan
-.PHONY: test
-
-apply:
-	@test -f settings-secret.sh && source settings-secret.sh ; \
-	terraform apply terraform.plan && rm -f terraform.plan
-.PHONY: apply
-
-do: apply
-.PHONY: do
-
-destroy:
-	terraform destroy
-.PHONY: destroy
-
-ashes: destroy
-.PHONY: ashes
-
-get:
-	terraform get
 .PHONY: get
+get:
+	$(TF_CMD) get
 
-output:
-	terraform output
 .PHONY: output
+output:
+	$(TF_CMD) output
 
-push:
-	git push
-.PHONY: push
 
-init:
-	@test -f settings-secret.sh && source settings-secret.sh ; \
-	[ -f backend-config ] && USE_BACKEND="--backend-config=./backend-config" || echo -e "\n\n**** WARNING: No backend-config found. Continuing anyway. **** \n\n" ; \
-	terraform init $${USE_BACKEND} ; \
+#
+# DOCKER VARIANTS
+#
 
-.PHONY: init
+define dscript_content
+docker run \\
+    -ti --rm \\
+    -w /tf/$$(realpath . --relative-to ../../) \\
+    -v "$$(realpath ../../):/tf" \\
+    -e AWS_PROFILE=$$AWS_PROFILE \\
+    -v $$HOME/.aws:/root/.aws \\
+    $(TF_DOCKER_IMAGE):${TF_DOCKER_IMAGE_VER} \\
+endef
 
+.PHONY: dscript
+.SILENT: dscript
+dscript:
+	echo "$(dscript_content)" > "$(TF_DOCKER_SCRIPT_NAME)"
+	echo '    "$${@}"' >> "$(TF_DOCKER_SCRIPT_NAME)"
+	chmod 755 "$(TF_DOCKER_SCRIPT_NAME)"
+
+.PHONY: dinit
+dinit: dscript
+dinit: TF_CMD = ./$(TF_DOCKER_SCRIPT_NAME)
+dinit: init
+
+dquick: dscript
+dquick: TF_CMD = "./$(TF_DOCKER_SCRIPT_NAME)"
+dquick: quick
+
+.PHONY: dplan
+dplan: dscript
+dplan: TF_CMD = ./$(TF_DOCKER_SCRIPT_NAME)
+dplan: plan
+
+.PHONY: dapply
+dapply: dscript
+dapply: TF_CMD = ./$(TF_DOCKER_SCRIPT_NAME)
+dapply: apply
+
+.PHONY: dboth
+dboth: dscript
+dboth: TF_CMD = ./$(TF_DOCKER_SCRIPT_NAME)
+dboth: both
+
+.PHONY: dqboth
+dqboth: dscript
+dqboth: TF_CMD = ./$(TF_DOCKER_SCRIPT_NAME)
+dqboth: qboth
+
+.PHONY: ddestroy
+ddestroy: dscript
+ddestroy: TF_CMD = ./$(TF_DOCKER_SCRIPT_NAME)
+ddestroy: destroy
+
+.PHONY: dunlock
+dunlock: dscript
+dunlock: TF_CMD = ./$(TF_DOCKER_SCRIPT_NAME)
+dunlock: unlock
+
+.PHONY: drefresh
+drefresh: dscript
+drefresh: TF_CMD = ./$(TF_DOCKER_SCRIPT_NAME)
+drefresh: refresh
+
+.PHONY: dget
+dget: dscript
+dget: TF_CMD = ./$(TF_DOCKER_SCRIPT_NAME)
+dget: get
+
+.PHONY: doutput
+doutput: dscript
+doutput: TF_CMD = ./$(TF_DOCKER_SCRIPT_NAME)
+doutput: output
+
+
+
+#
+# TERRAFORM - set up new project
+#
+
+# what does this do?
+#   copies _project_temlate/ to $NEW_PROJECT
+#   adjusts backend.tf if found:
+#     - replace %%PROJECT%% with $NEW_PROJECT
+# WARNING: UNTESTED.
+.PHONY: new
 new:
-	@read -p  "Unterprojekt: " SUBJECT ; \
+	@read -p  "New project directory: " SUBJECT ; \
+	if [ ! -d "_project_template" ] ; then \
+		echo "No _project_template dir found. Aborting." ; \
+		exit -1 ; \
+	fi ; \
 	if [ -z "$$SUBJECT" ] ; then \
-	  echo "Abbruch." ; \
+	  echo "Abort." ; \
 	  exit -1 ; \
 	fi ; \
 	NEW_PROJECT="$${SUBJECT}" ; \
 	NEW_PROJECT=$$(echo $$NEW_PROJECT | tr '[:upper:]' '[:lower:]') ; \
 	if [ -d "$$NEW_PROJECT" ] ; then \
-	  echo "ERROR: $$NEW_PROJECT existiert bereits. Abbruch." ; \
+	  echo "ERROR: $$NEW_PROJECT already exists. Aborting." ; \
 	  exit -1 ; \
 	fi ; \
 	cp -r _project_template "$$NEW_PROJECT" ; \
 	cd "$$NEW_PROJECT" ; \
-	mv "settings-segret-sample.sh" "settings-secret.sh" ; \
-	sed -i "s/PROJECTNAME/$$NEW_PROJECT/g" backend-config ; \
-	echo "Verzeichnis $$NEW_PROJECT angelegt." ; \
-	echo "Nächste Schritte: In diesem Verzeichnis ..." ; \
-	echo "  * die Datei 'settings-secret.sh' anpassen falls nötig" ; \
-	echo "  * 'make init' ausführen" ; \
-	echo "  * 'make plan' ausführen" ; \
-    echo "Fertig."
-.PHONY: new
-
-
-
-#
-# secret management
-#
-
-open:
-	find . -iname "*.gpg" | while read GPG_FILE ; do \
-	    UNSAFE_FILE=$${GPG_FILE%.gpg} ; \
-	    gpg -d "$$GPG_FILE" > "$$UNSAFE_FILE"; \
-	    chmod 600 "$$UNSAFE_FILE" ; \
-	    touch -r "$$GPG_FILE" "$$UNSAFE_FILE" ; \
-	done
-.PHONY: open
-.SILENT: open
-
-clean-gpg:
-	find . -iname "*.gpg" | while read GPG_FILE ; do \
-	    DELETE_ME=$${GPG_FILE%.gpg} ; \
-	    rm -rfv "$$DELETE_ME";  \
-	done
-	for EXT in key sec ; do \
-	    find . -iname "*.$$EXT" | while read DELETE_ME ; do \
-	        rm -rfv "$$DELETE_ME";  \
-	    done \
-	done
-.PHONY: clean-gpg
-.SILENT: clean-gpg
-
-close: clean
-.PHONY: close
-
-# https://security.stackexchange.com/a/86751
-reencrypt:
-	REPO_ROOT=$$(realpath --relative-to=. $$(git rev-parse --show-toplevel)) ; \
-	RECIPIENTS="" ; \
-	for RECIPIENT in "$$REPO_ROOT/gpg_keys/"* ; do \
-	    RECIPIENTS="$$RECIPIENTS -f $$RECIPIENT" ; \
-	done ; \
-	find . -iname "*.gpg" | while read GPG_FILE ; do \
-	    UNSAFE_FILE=$${GPG_FILE%.gpg} ; \
-		if [ "$$UNSAFE_FILE" -nt "$$GPG_FILE" ] ; then \
-	        echo "** UPDATING $$GPG_FILE" ; \
-			gpg --yes -e $$RECIPIENTS "$$UNSAFE_FILE" ; \
-	    else \
-		    echo "-  skipping $$GPG_FILE" ; \
-	    fi ; \
-	done
-.PHONY: reencrypt
-.SILENT: reencrypt
-
-# https://security.stackexchange.com/a/86751
-reencrypt-force:
-	REPO_ROOT=$$(realpath --relative-to=. $$(git rev-parse --show-toplevel)) ; \
-	RECIPIENTS="" ; \
-	for RECIPIENT in "$$REPO_ROOT/gpg_keys/"* ; do \
-	    RECIPIENTS="$$RECIPIENTS -f $$RECIPIENT" ; \
-	done ; \
-	find . -iname "*.gpg" | while read GPG_FILE ; do \
-	    UNSAFE_FILE=$${GPG_FILE%.gpg} ; \
-		echo "** UPDATING $$GPG_FILE" ; \
-		gpg --yes -e $$RECIPIENTS "$$UNSAFE_FILE" ; \
-	done
-.PHONY: reencrypt-force
-.SILENT: reencrypt-force
-
-
-update-backends:
-	REPO_ROOT=$$(realpath --relative-to=. $$(git rev-parse --show-toplevel)) ; \
-	echo "Really replace all backend-config files in all subdirs? (CTRL-C to abort)" ; \
-	read ; \
-	for subdir in * ; do \
-	  if [ -f "$$subdir/backend-config" ] ; then \
-	    [ "$$subdir" == "_project_template" ] && continue ; \
-		echo "UPDATING: $$subdir" ; \
-	    cp _project_template/backend-config "$$subdir/backend-config" ; \
-	    sed -i "s/PROJECTNAME/$$subdir/g" "$$subdir/backend-config" ; \
-	  fi ; \
-	done
-.PHONY: update-backends
-.SILENT: update-backends
-
-
-
-#
-# combined targets
-#
-
-clean: clean-tf clean-gpg
-.PHONY: clean
+	if [ -f "backend.tf" ] ; then \
+		sed -i \
+			-e "s/%%PROJECT%%/$$NEW_PROJECT/g" backend.tf ; \
+	else \
+		echo "No backend.tf found in project dir - not adjusting values." ; \
+	fi
+	echo "Dir $$NEW_PROJECT created from template." ; \
+	echo "Next steps ..." ; \
+	echo "  * run 'make init'" ; \
+	echo "  * run 'make plan'" ; \
+	echo "  * run 'make do' (if you're bold ;)" ; \
+    echo "Done."
