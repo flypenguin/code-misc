@@ -1,7 +1,3 @@
-# - create settings-secret.sh, SHOULD NEVER BE CHECKED IN, content:
-#   ARM_ACCESS_KEY="..."
-
-
 SHELL := bash
 TF_CMD := terraform
 TF_DOCKER_IMAGE := hashicorp/terraform
