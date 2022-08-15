@@ -3,16 +3,28 @@
 - hosts: win_servers
   tasks:
     - name: "create C:\\temp"
-      win_file:
+      ansible.windows.win_file:
         path: "c:\\temp"
         state: directory
 
     - name: Download 7z installer
       win_get_url:
-        url: https://www.7-zip.org/a/7z2107-x64.msi
+        url: https://www.7-zip.org/abc/7z2107-x64.msi
         dest: "C:\\temp\\7z2107-x64.msi"
 
     - name: Install MSI
       win_package:
         path: "C:\\temp\\7z2107-x64.msi"
         state: present
+# "hallo welt"
+# 1234
+# true / false
+
+# ["listenelement 1", "listenelement 2", "listenelement 3"]
+
+# {"rights": ["admin", "storage_admin", "network_admin"]}
+
+# rights:
+#  - admin
+#  - storage_admin
+#  - network_admin

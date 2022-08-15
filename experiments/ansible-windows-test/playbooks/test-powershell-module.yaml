@@ -4,8 +4,8 @@
 
 - hosts: win_servers
   tasks:
-    - name: simple powershell module example to get Windows OS version
+    - name: "simple powershell module example to get Windows OS version"
       get_version:
-        major: "5"
+        major: "14"
         minor: "1"
         build: "17763"
