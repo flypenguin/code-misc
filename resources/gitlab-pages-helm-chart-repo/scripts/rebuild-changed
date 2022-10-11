@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+
+# Rebuilds all changed charts from the "charts_to_rebuild" file
+
+. $(dirname $0)/common.sh
+
+prepare_publishing_dir
+
+echo -n "setting LAST_RUN commit ID ... "
+echo "$CI_COMMIT_SHORT_SHA" > "$LAST_RUN_FILE"
+echo "done."
+
+echo "rebuilding charts ..."
+cat charts_to_rebuild | while read CHART ; do
+    echo -n "  $CHART: "
+    if ! helm package "$CHART" --destination "$PUBLISH_DIR" ; then
+        echo "ERROR!"
+        exit 1
+    fi
+done
+echo "done."
+
+echo -n "reindexing repo ..."
+if ! helm repo index --url "$HELM_REPO_URL" "$PUBLISH_DIR" ; then
+    echo "ERROR. aborting."
+    exit 1
+else
+    echo "done."
+fi

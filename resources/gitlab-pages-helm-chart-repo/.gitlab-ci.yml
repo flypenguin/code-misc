@@ -1,0 +1,59 @@
+stages:
+  - test
+  - deploy
+
+#
+# generally, those two jobs should never run both.
+# one should run on each merge-request-related commit,
+# the other one should only run on the final result _after_ the merge.
+# the second one is the one creating & pushing the artifacts.
+#
+
+lint:
+  image:
+    name: alpine/helm
+    entrypoint: ["/bin/sh", "-c"]
+  stage: test
+  script:
+    - apk update
+    - apk add yq git bash
+    - for a in charts/* ; do helm lint $a || exit 255 ; done
+
+status:
+  image:
+    name: alpine/helm
+    entrypoint: ["/bin/sh", "-c"]
+  stage: deploy
+  before_script:
+    - apk update
+    - apk add yq git bash
+  script:
+    - scripts/determine-action || true
+  rules:
+    - if: $CI_COMMIT_BRANCH != "main"
+  needs:
+    - lint
+
+pages:
+  image:
+    name: alpine/helm
+    entrypoint: ["/bin/sh", "-c"]
+  stage: deploy
+  before_script:
+    - apk update
+    - apk add yq git bash
+  script:
+    # the "|| rm -rf public" is needed for two things:
+    #  - first, so the pipeline does not fail
+    #  - second, so that gitlab skips the publish process.
+    - scripts/determine-action && scripts/rebuild-changed || rm -rf public
+  artifacts:
+    paths:
+      - public
+  rules:
+    # from here: https://is.gd/ZYnccl
+    # should run only on the result (!) of a MERGED branch after
+    # the merge is complete. hopefully this works ;)
+    - if: $CI_COMMIT_BRANCH == "main"
+  needs:
+    - lint

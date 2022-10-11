@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+
+# downloads all existing charts from the helm repo into the local
+# PUBLISH_DIR. why? if we don't do this, the old versions will be
+# lost.
+
+. $(dirname $0)/common.sh
+
+mkdir -p "$PUBLISH_DIR"
+cd "$PUBLISH_DIR"
+DOWNLOAD_URL="$HELM_REPO_URL/index.yaml"
+
+echo -n "getting index.yaml form helm repo ..."
+curl --fail -sL $DOWNLOAD_URL -o index.yaml
+checkerr "could not donwnload index.yaml from helm repo" "$DOWNLOAD_URL"
+echo "ok"
+
+echo "downloading existing helm charts ..."
+cat index.yaml | grep http | grep tgz | sed -E 's/ +- (http.+)/\1/g' \
+| while read DOWNLOAD_URL ; do
+    curl --fail -sL -O $DOWNLOAD_URL
+    checkerr "could not download chart: $DOWNLOAD_URL"
+    echo "  downloaded $DOWNLOAD_URL"
+done
+echo "done."

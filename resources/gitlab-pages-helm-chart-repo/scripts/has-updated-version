@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+
+# RETURNS:
+#   0 - if the chart version was updated between the LAST_RUN and now
+#   1 - it it was NOT updated
+
+. $(dirname $0)/common.sh
+
+if [ "$1" == "" ] ; then
+    eerr "USAGE: $(basename $0) path_to_chart"
+    exit 255
+fi
+
+CHART="$1"
+
+# get _current_ chart version number
+VERSION_NOW=$(cat $CHART/Chart.yaml | yq .version)
+
+# backup current file (it might be a locally modified copy
+# in a cloned repo, which is why we don't just reset it to
+# the last checked-in version)
+mv "$CHART/Chart.yaml" "$CHART/Chart.yaml.backup"
+# get version from LAST_RUN
+git checkout $LAST_RUN_ID $CHART/Chart.yaml > /dev/null 2>&1
+VERSION_THEN=$(cat $CHART/Chart.yaml | yq .version)
+# restore old version
+mv -f "$CHART/Chart.yaml.backup" "$CHART/Chart.yaml"
+
+# check if versions are the same
+if [[ "$VERSION_NOW" == "$VERSION_THEN" ]] ; then
+  exit 1
+else
+  exit 0
+fi

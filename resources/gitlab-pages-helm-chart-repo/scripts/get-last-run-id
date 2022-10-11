@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+
+. $(dirname $0)/common.sh
+
+LAST_RUN_DOWNLOADED="$(dirname $0)/../LAST_RUN.downloaded"
+
+init_last_run_file() {
+    # get "LAST_RUN" file from github pages with the commit ID
+    # of the last successful pipeline run
+    eerr -n "Retreiving LAST_RUN file ... "
+    RESULT=$(curl -Ls --output "$LAST_RUN_DOWNLOADED" --write-out "%{http_code}" ${LAST_RUN_FILE_URL})
+    RESULT_CMD=$?
+    eerr "ok"
+
+    # gitlab returns a 404 PAGE on "file not found", but the HTTP return code
+    # MIGHT actually be 200 ... which sucks. so let's test for that.
+    LAST_RUN_LINES=$(cat $LAST_RUN_DOWNLOADED | wc -l )
+    if [ $LAST_RUN_LINES -gt 2 ] ; then
+        RESULT=404
+    fi
+
+    # did we get a file or not? if not let's just use THIS commit as the
+    # reference commit
+    if [[ $RESULT -ge 300 || $RESULT_CMD -ne 0 ]] ; then
+        # $branch_name should now be "main" or "master", in that priority.
+        LAST_RUN_ID=$CI_COMMIT_SHORT_SHA
+        echo -n $LAST_RUN_ID > "$LAST_RUN_DOWNLOADED"
+        eerr "Initializing LAST_RUN to HEAD: $LAST_RUN_ID"
+    else
+        LAST_RUN_ID=$(cat "$LAST_RUN_DOWNLOADED")
+        eerr "Current commit commit ID:       $CI_COMMIT_SHORT_SHA"
+        eerr "Pipeline ran last on commit ID: $LAST_RUN_ID"
+        eerr ""
+    fi
+}
+
+if [ ! -f "$LAST_RUN_DOWNLOADED" ] ; then
+    init_last_run_file
+fi
+
+cat "$LAST_RUN_DOWNLOADED"

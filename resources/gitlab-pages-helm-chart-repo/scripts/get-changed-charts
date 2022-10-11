@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+. $(dirname $0)/common.sh
+
+set_last_run_id
+CHANGED_CHARTS=$(git diff --name-only $LAST_RUN_ID -- charts/ | grep -Ev '(/\.helm|/\.bump|CHANGELOG)' | cut -d/ -f1-2 | sort | uniq)
+for CHANGED_CHART in $CHANGED_CHARTS ; do
+    echo $CHANGED_CHART
+done

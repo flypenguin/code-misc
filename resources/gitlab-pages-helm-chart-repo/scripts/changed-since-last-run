@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+. $(dirname $0)/common.sh
+
+if [ "$1" == "" ] ; then
+    echo "USAGE: $(basename $0)   chart_dir"
+    echo "returns:    1 if chart is UNchanged"
+    echo "returns:    0 if chart is CHANGED"
+    exit 255
+fi
+
+set_last_run_id
+CHART_DIR="$1"
+CHANGED_FILES=$(git diff --name-only $LAST_RUN_ID -- "$CHART_DIR" | grep -Ev '(/\.helm|/\.bump|CHANGELOG)' | cut -d/ -f1-2 | sort | uniq)
+if [ ! -z "$CHANGED_FILES" ] ; then
+    # we have changed files
+    exit 0
+else
+    # we do NOT have changed files, chart is unchanged.
+    exit 1
+fi

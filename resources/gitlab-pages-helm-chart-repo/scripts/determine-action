@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+
+# RETURNS:
+#   0 - (some) charts can be rebuilt
+#   1 - charts are changed, but no updated versions
+#   2 - no changes to charts.
+
+. $(dirname $0)/common.sh
+
+CHANGED_CHARTS="no"
+
+echo "Checking for chart status ..."
+set_last_run_id
+rm -f charts_to_rebuild
+for CHART in charts/* ; do
+    echo -n "  * $CHART: "
+    if ! changed_since_last_run "$CHART" ; then
+        echo -e "${LGR}unchanged.${NC}"
+    else
+        CHANGED_CHARTS="yes"
+        if ! has_updated_version "$CHART" ; then
+            echo -e "${BRD}no version update, skipping.${NC}"
+        else
+            echo -e "${LGN}marked for rebuild.${NC}"
+            echo "$CHART" >> charts_to_rebuild
+        fi
+    fi
+done
+
+echo ""
+if [ "$CHANGED_CHARTS" == "no" ] ; then
+    echo -e "${LBL}No action needed, all charts unchanged.${NC}"
+    exit 2
+elif [ ! -f charts_to_rebuild ] ; then
+    echo -e "${LYE}No changed chart did update their version.${NC}"
+    echo -e "${LYE}Doing nothing.${NC}"
+    exit 1
+else
+    echo -e "${LGN}Rebuilding (some) charts.${NC}"
+    exit 0
+fi
+echo ""
