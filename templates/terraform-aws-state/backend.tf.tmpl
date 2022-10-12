@@ -1,0 +1,19 @@
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 4.0"
+    }
+  }
+
+  backend "s3" {
+    region         = "${aws_region}"
+    bucket         = "${full_bucket_name}"
+    key            = "${state_file_name}"
+    dynamodb_table = "${dynamo_db_lock_table_name}"
+  }
+}
+
+provider "aws" {
+  region = "eu-central-1"
+}
