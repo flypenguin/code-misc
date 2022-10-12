@@ -3,6 +3,7 @@
 # AWS
 #
 
+
 C_BOLD="\e[1m"
 C_BRED="\e[91m"
 C_BGRE="\e[92m"
@@ -11,9 +12,11 @@ C_BWHI="\e[97m"
 C_REST="\e[0m"
 H_GREN="${C_BGRE}${C_BOLD}"
 H_YELO="${C_BYEL}${C_BOLD}"
+H_REDD="${C_BRED}${C_BOLD}"
 DINFO="${C_BWHI}${C_BOLD}INFO:${C_REST}"
 DERRR="${C_BRED}${C_BOLD}ERROR:${C_REST}"
 DWARN="${C_BYEL}${C_BOLD}WARNING:${C_REST}"
+
 
 # this function assumes the following env variables are present:
 #   - AWS_TOKEN_VALIDITY
@@ -52,6 +55,7 @@ _aws_load_token() {
     return 1
   fi
 }
+
 
 # parameters:
 #   $1 - the profile to get a token for
@@ -135,6 +139,7 @@ EOF
   echo "${DINFO} ${H_GREN}token valid until ${VALIDITY_STR}${C_REST}"
 }
 
+
 # gat = Get Aws sessionToken
 gat() {
   local TOKEN_DURATION=28800 # 8h
@@ -142,19 +147,19 @@ gat() {
   local USE_PROFILE
 
   if [ "$2" = "-f" ] ; then
-    echo "$DERRR Parameter '-f' must be first!"
-    return
+    FORCE_TOKEN="yes"
+    USE_PROFILE="$1"
   elif [ "$1" = "-f" ] ; then
     FORCE_TOKEN="yes"
-    shift
+    USE_PROFILE="${2:-${AWS_MFA_BASE:-default}}"
+  else
+    USE_PROFILE="${1:-${AWS_MFA_BASE:-default}}"
   fi
-  # determine profile name to use & init some settings
-  [ -z "$1" ] && USE_PROFILE="default" || USE_PROFILE="$1"
   echo "$DINFO using ${H_GREN}profile '${USE_PROFILE}'${C_REST}"
   TOKEN_FILE="$HOME/.aws/token.$USE_PROFILE.sh"
   # check if we already have a session token active
   if [ "$FORCE_TOKEN" = "yes" ] ; then
-    echo "$DINFO Force-creating new token ..."
+    echo "$DINFO ${H_REDD}Force-creating${C_REST} new token ..."
     _aws_get_new_token $USE_PROFILE
   else
     _aws_load_token $USE_PROFILE || _aws_get_new_token $USE_PROFILE
