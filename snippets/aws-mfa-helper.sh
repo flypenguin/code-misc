@@ -3,6 +3,7 @@
 # AWS
 #
 
+AWS_TOKEN_DURATION=28800 # AWS_8h
 
 C_BOLD="\e[1m"
 C_BRED="\e[91m"
@@ -90,12 +91,12 @@ _aws_get_new_token() {
   echo $MFA_ARN
 
   echo -n "* Getting session token ... "
-  SESSION_TOKEN_JSON=$(aws --profile $AWS_PROFILE sts get-session-token --serial-number $MFA_ARN --token-code $MFA_TOKEN --duration-seconds $TOKEN_DURATION)
+  SESSION_TOKEN_JSON=$(aws --profile $AWS_PROFILE sts get-session-token --serial-number $MFA_ARN --token-code $MFA_TOKEN --duration-seconds $AWS_TOKEN_DURATION)
   if [ "$?" != "0" ] ; then
     echo "$DERRR something failed getting the session token. You should close this shell."
     return 3
   else
-    export AWS_TOKEN_VALIDITY=$(( $(date +%s) + TOKEN_DURATION ))
+    export AWS_TOKEN_VALIDITY=$(( $(date +%s) + AWS_TOKEN_DURATION ))
     export AWS_MFA_BASE=$AWS_PROFILE
     export AWS_PROFILE="$1_mfasession"
     echo "${C_BGRE}${C_BOLD}done${C_REST}."
@@ -145,7 +146,6 @@ EOF
 
 # gat = Get Aws sessionToken
 gat() {
-  local TOKEN_DURATION=28800 # 8h
   local FORCE_TOKEN="no"
   local USE_PROFILE
 
