@@ -97,6 +97,7 @@ _aws_get_new_token() {
   else
     export AWS_TOKEN_VALIDITY=$(( $(date +%s) + TOKEN_DURATION ))
     export AWS_MFA_BASE=$AWS_PROFILE
+    export AWS_PROFILE="$1_mfasession"
     echo "${C_BGRE}${C_BOLD}done${C_REST}."
   fi
 
@@ -112,26 +113,28 @@ _aws_get_new_token() {
 export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
 export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
 export AWS_SESSION_TOKEN=$AWS_SESSION_TOKEN
+export AWS_PROFILE=$AWS_PROFILE
 # helper variables
 export AWS_TOKEN_VALIDITY=$AWS_TOKEN_VALIDITY
-export AWS_MFA_BASE=$AWS_PROFILE
+export AWS_MFA_BASE=$AWS_MFA_BASE
 EOF
   chmod 600 "$TOKEN_FILE"
   echo "done."
 
-  export AWS_PROFILE="$1_mfasession"
   echo -n "* Creating AWS MFA ${C_BWHI}${C_BOLD}profile '${AWS_PROFILE}'${C_REST} ... "
   # delete old version of profile from credentials file
   SED_MARKER="##- MFA $AWS_PROFILE"
-  sed -Ei "/$SED_MARKER/,/$SED_MARKER/d" "$HOME/.aws/credentials"
-  # append new credentials
   TMP="$HOME/.aws/credentials"
+  touch "$TMP"
+  sed -Ei "/$SED_MARKER/,/$SED_MARKER/d" "$TMP"
+  # append new credentials
   echo "$SED_MARKER start"                                  >> "$TMP"
   echo "[$AWS_PROFILE]"                                     >> "$TMP"
   echo "aws_access_key_id = $AWS_ACCESS_KEY_ID"             >> "$TMP"
   echo "aws_secret_access_key = $AWS_SECRET_ACCESS_KEY"     >> "$TMP"
   echo "aws_session_token = $AWS_SESSION_TOKEN"             >> "$TMP"
   echo "$SED_MARKER end"                                    >> "$TMP"
+  chmod 600 "$TMP"
   echo "done."
 
   echo "* done."
