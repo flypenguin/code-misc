@@ -127,7 +127,11 @@ EOF
   SED_MARKER="##- MFA $AWS_PROFILE"
   TMP="$HOME/.aws/credentials"
   touch "$TMP"
-  sed -Ei "/$SED_MARKER/,/$SED_MARKER/d" "$TMP"
+  # the only portable way to do things between mac & linux
+  # see https://stackoverflow.com/a/4247319
+  sed -E -i'.bak' -e "/$SED_MARKER/,/$SED_MARKER/d" "$TMP"
+  # delete the backup file
+  rm -f "${TMP}.bak"
   # append new credentials
   echo "$SED_MARKER start"                                  >> "$TMP"
   echo "[$AWS_PROFILE]"                                     >> "$TMP"
