@@ -143,7 +143,11 @@ EOF
   echo "done."
 
   echo "* done."
-  local VALIDITY_STR=$(date --date=@$AWS_TOKEN_VALIDITY +%H:%M:%S)
+  if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    local VALIDITY_STR=$(date --date=@$AWS_TOKEN_VALIDITY '+%d-%m-%YT%H:%M:%S')
+  elif [[ "$OSTYPE" == "darwin"* ]]; then
+    local VALIDITY_STR=$(date -r $AWS_TOKEN_VALIDITY '+%d-%m-%YT%H:%M:%S')
+  fi
   echo "${DINFO} ${H_GREN}token valid until ${VALIDITY_STR}${C_REST}"
 }
 
