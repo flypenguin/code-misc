@@ -44,9 +44,21 @@ _aws_load_token() {
   local TIME_NOW=$(date  +%s)
   local TIME_REMAINING=$((AWS_TOKEN_VALIDITY - TIME_NOW))
   if (( TIME_REMAINING > 3600 )) ; then
-    echo "$DINFO existing ${H_GREN}token still valid${C_REST} (and loaded)"
+    echo "$DINFO existing ${H_GREN}token still valid${C_REST} (and active)"
     return 0
-  elif (( TIME_REMAINING > 0 )) ; then
+  fi
+  # token no longer "fresh", let's check if there's a newer one already in the
+  # TOKEN_FILE ...
+  if [ -f "$TOKEN_FILE" ] ; then
+    . "$TOKEN_FILE"
+    TIME_REMAINING=$((AWS_TOKEN_VALIDITY - TIME_NOW))
+    if (( TIME_REMAINING > 3600 )) ; then
+      echo "$DINFO saved ${H_GREN}token still valid${C_REST} (and now active)"
+      return 0
+    fi
+  fi
+  # so we're REALLY no longer "fresh" ...
+  if (( TIME_REMAINING > 0 )) ; then
     # "token almost expired"
     echo "$DINFO existing ${H_YELO}token almost expired${C_REST}, creating new one"
     return 2
