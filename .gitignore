@@ -10,6 +10,8 @@ id_rsa*
 !id_rsa*.gpg
 !id_rsa*.asc
 
+test/
+
 # .env files also seem to be a good idea.
 .env
 

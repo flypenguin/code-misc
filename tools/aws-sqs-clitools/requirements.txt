@@ -1,0 +1,4 @@
+boto3
+environs
+loguru
+typer[all]
