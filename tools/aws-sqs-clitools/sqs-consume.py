@@ -103,7 +103,7 @@ def consume(
     logger.debug(f"found queue: {queue}")
 
     if drain:
-        logger.warning("purging queue: {queue}")
+        logger.warning(f"purging queue: {queue}")
         queue.purge()
         return
 
