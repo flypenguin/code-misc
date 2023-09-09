@@ -1,18 +1,18 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
-import boto3
 import json
 import os
 import sys
-import typer
 from datetime import datetime as dt
-from rich import print_json
 from functools import partial
 from pathlib import Path
-from typing import Optional
-from loguru import logger
-from environs import Env
+from typing import Annotated, Optional
 
+import boto3
+import typer
+from environs import Env
+from loguru import logger
+from rich import print_json
 
 cli = typer.Typer()
 env = Env()
@@ -40,7 +40,6 @@ def print_message(
     save_path: Optional[Path] = None,
 ):
     ts_str = f"{dt.now().timestamp():.6f}"
-    msg_id = message.message_id
     if decode_json:
         msg_dict = json.loads(message.body)
         if json_decode_path:
@@ -67,31 +66,48 @@ def print_message(
 @cli.command()
 def consume(
     queue_name: str,
-    delete: bool = typer.Option(True, help="deletes the message after receiving"),
-    continuous: bool = typer.Option(
-        True, "--continuous/--once", "-c/-1", help="keep consuming indefinitely"
-    ),
-    decode_json: bool = typer.Option(
-        False, "--json", "-j", help="decode the message as JSON"
-    ),
-    json_decode_path: str = typer.Option(
-        "",
-        "--decode-path",
-        "-p",
-        help="applies json decodes recursively, requires --json",
-    ),
-    drain: bool = typer.Option(
-        False,
-        "--drain",
-        help="drains all messages in the queue without printing anything",
-    ),
-    aws_region: str = typer.Option("eu-central-1", help="use this SQS region"),
-    timeout_secs: int = typer.Option(
-        10, "--timeout", help="the long-poll timeout to use"
-    ),
-    save_path: str = typer.Option(
-        None, "--save", "-s", help="save all messages unter this path"
-    ),
+    delete: Annotated[
+        bool,
+        typer.Option(help="deletes the message after receiving"),
+    ] = True,
+    continuous: Annotated[
+        bool,
+        typer.Option(
+            "--continuous/--once", "-c/-1", help="keep consuming indefinitely"
+        ),
+    ] = True,
+    decode_json: Annotated[
+        bool,
+        typer.Option("--json", "-j", help="decode the message as JSON"),
+    ] = False,
+    json_decode_path: Annotated[
+        str,
+        typer.Option(
+            "--decode-path",
+            "-p",
+            help="applies json decodes recursively, requires --json",
+        ),
+    ] = "",
+    drain: Annotated[
+        bool,
+        typer.Option(
+            "-d",
+            "--drain",
+            help="drains all messages in the queue without printing anything",
+        ),
+    ] = False,
+    aws_region: Annotated[
+        str,
+        typer.Option(help="use this SQS region"),
+    ] = "eu-central-1",
+    timeout_secs: Annotated[
+        int,
+        typer.Option("--timeout", help="the long-poll timeout to use"),
+    ] = 10,
+    save_path: Annotated[
+        str,
+        typer.Option("--save", "-s", help="save all messages unter this path"),
+    ] = "",
 ):
     sqs = boto3.resource(
         "sqs",
