@@ -1,0 +1,65 @@
+context: "postgres-operator-test"
+
+metadata:
+  scope: "k8s of localhost docker"
+  maintainer: "k8s-admin"
+
+settings:
+  kubeContext: "docker-desktop"
+
+namespaces:
+  minio:
+  cloudnativepg:
+  crunchydata:
+  cluster-test: # used for the cluster(s)
+
+helmRepos:
+  # we configure "S3" as backup target, so we need minio.
+  minio-operator: https://operator.min.io
+  cnpg: "https://cloudnative-pg.github.io/charts"
+
+apps:
+  ## REGARDING MINIO
+  #
+  #    we first install the operator using this: https://is.gd/voxglu
+  #    then we install a tenant like this: https://is.gd/PRixB3
+
+  minio-operator:
+    name: "minio-operator"
+    description: "MinIO operator"
+    namespace: "minio"
+    enabled: true
+    chart: "minio-operator/operator"
+    version: "5.0.11"
+    valuesFile: values-minio-operator.yaml
+    # values file reference: https://is.gd/40b0v1
+
+  minio-tenant0:
+    name: "minio-tenant0"
+    description: "MinIO tenant"
+    namespace: "minio"
+    enabled: true
+    chart: "minio-operator/tenant"
+    version: "5.0.11"
+    valuesFile: values-minio-tenant0.yaml
+    # values file reference: https://is.gd/t7UGsi
+
+  cloudnativepg:
+    name: "cloudnativepg"
+    description: "postgres operator"
+    namespace: "cloudnativepg"
+    enabled: true
+    chart: "cnpg/cloudnative-pg"
+    version: "0.20.0"
+    valuesFile: "values-cloudnative-pg.yaml"
+
+  crunchy:
+    # we don't need a values file, default settings are just fine.
+    #   https://is.gd/EQ8MNG
+    name: "crunchydata"
+    description: "crunchy postgres operator"
+    namespace: "crunchydata"
+    enabled: true
+    # this needs the ENV variable HELM_EXPERIMENTAL_OCI=1 set
+    chart: "oci://registry.developers.crunchydata.com/crunchydata/pgo"
+    version: "5.5.0" # see https://is.gd/ajNt7d

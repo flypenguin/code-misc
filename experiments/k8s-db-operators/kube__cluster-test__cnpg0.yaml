@@ -1,0 +1,23 @@
+# v1.22 API reference here: https://is.gd/KLReg0
+
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: cnpg0
+spec:
+  instances: 1
+
+  bootstrap:
+    initdb:
+      database: cnpg
+      owner: cnpg-user
+
+  # Example of rolling update strategy:
+  # - unsupervised: automated update of the primary once all
+  #                 replicas have been upgraded (default)
+  # - supervised: requires manual supervision to perform
+  #               the switchover of the primary
+  primaryUpdateStrategy: unsupervised
+
+  storage:
+    size: 200Mi

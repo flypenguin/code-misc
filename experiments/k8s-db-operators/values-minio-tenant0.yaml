@@ -1,0 +1,9 @@
+# values file reference: https://is.gd/t7UGsi
+
+tenant:
+  name: tenant0
+  pools:
+    - servers: 1
+      name: pool-0
+      volumesPerServer: 1
+      size: 1Gi

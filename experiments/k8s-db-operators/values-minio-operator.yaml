@@ -1,0 +1,4 @@
+# values file reference: https://is.gd/40b0v1
+
+operator:
+  replicaCount: 1

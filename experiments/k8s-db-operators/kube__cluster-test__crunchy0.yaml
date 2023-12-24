@@ -1,0 +1,30 @@
+# see here:
+#   https://access.crunchydata.com/documentation/postgres-operator/latest/references/crd
+#   v5.5 here: https://is.gd/UqPYnH
+
+apiVersion: postgres-operator.crunchydata.com/v1beta1
+kind: PostgresCluster
+metadata:
+  name: crunchy0
+spec:
+  postgresVersion: 15
+  instances:
+    - name: instance1
+      dataVolumeClaimSpec:
+        accessModes:
+          - "ReadWriteOnce"
+        resources:
+          requests:
+            storage: 1Gi
+  backups:
+    pgbackrest:
+      image: registry.developers.crunchydata.com/crunchydata/crunchy-pgbackrest:ubi8-2.47-2
+      repos:
+        - name: repo1
+          volume:
+            volumeClaimSpec:
+              accessModes:
+                - "ReadWriteOnce"
+              resources:
+                requests:
+                  storage: 1Gi

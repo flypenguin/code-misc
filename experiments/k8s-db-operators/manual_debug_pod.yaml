@@ -1,0 +1,18 @@
+# API: https://is.gd/soC3Ai / DOC: https://is.gd/pl5cdw
+apiVersion: v1
+kind: Pod
+metadata:
+  name: quick-debug-pod
+  annotations:
+    purpose: test
+    can-be-deleted: "yes"
+    deleteme: "now"
+spec:
+  containers:
+    - name: shell
+      image: debian:bullseye
+      args: [sleep, infinity]
+      resources:
+        limits:
+          memory: "64Mi"
+          cpu: "250m"
