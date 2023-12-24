@@ -41,5 +41,11 @@ Then:
 * [Crunchy data](https://www.crunchydata.com/)
     * [Documentation](https://access.crunchydata.com/documentation/postgres-operator/latest)
     * [PostgresCluster v5.5 API reference (CRDs)](https://access.crunchydata.com/documentation/postgres-operator/latest/references/crd/5.5.x/postgrescluster)
+* [Percona K8S operators](https://www.percona.com/software/percona-kubernetes-operators)
+    * [v2.0 Documentation](https://docs.percona.com/percona-operator-for-postgresql/2.0/index.html)
+    * [PerconaPGCluster v2.0 API reference (CRDs)](https://docs.percona.com/percona-operator-for-postgresql/2.0/operator.html)
+* [Zalando Postgres operator](https://github.com/zalando/postgres-operator)
+    * [Documentation](https://postgres-operator.readthedocs.io/en/latest/)
+    * [Cluster Manifest API reference (CRDs - _maybe_)](https://postgres-operator.readthedocs.io/en/latest/reference/cluster_manifest/) (yes, this is shit)
 * PG other
     * [PGBarman](https://pgbarman.org/)

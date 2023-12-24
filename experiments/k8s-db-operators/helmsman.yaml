@@ -11,12 +11,17 @@ namespaces:
   minio:
   cloudnativepg:
   crunchydata:
+  postgres-operator:
+  percona-operator:
   cluster-test: # used for the cluster(s)
 
 helmRepos:
   # we configure "S3" as backup target, so we need minio.
   minio-operator: https://operator.min.io
   cnpg: "https://cloudnative-pg.github.io/charts"
+  postgres-operator: https://opensource.zalando.com/postgres-operator/charts/postgres-operator
+  postgres-operator-ui: https://opensource.zalando.com/postgres-operator/charts/postgres-operator-ui
+  percona: https://percona.github.io/percona-helm-charts/
 
 apps:
   ## REGARDING MINIO
@@ -63,3 +68,35 @@ apps:
     # this needs the ENV variable HELM_EXPERIMENTAL_OCI=1 set
     chart: "oci://registry.developers.crunchydata.com/crunchydata/pgo"
     version: "5.5.0" # see https://is.gd/ajNt7d
+
+  postgres-operator:
+    # from zalando
+    name: "postgres-operator"
+    description: "zalando postgres operator"
+    namespace: "postgres-operator"
+    enabled: false
+    # this needs the ENV variable HELM_EXPERIMENTAL_OCI=1 set
+    chart: "postgres-operator/postgres-operator"
+    version: "1.10.1" # helm search repo postgres-operator
+    # values file reference: values reference: https://is.gd/GeSkCk
+
+  percona:
+    # https://docs.percona.com/percona-operator-for-postgresql/2.0/index.html
+    name: "percona-operator"
+    description: "percona postgres operator"
+    namespace: "percona-operator"
+    enabled: false
+    # this needs the ENV variable HELM_EXPERIMENTAL_OCI=1 set
+    chart: "percona/pg-operator"
+    version: "2.2.2" # helm search repo postgres-operator
+    # values file reference: https://is.gd/GeSkCk
+
+  percona0:
+    name: "percona0"
+    description: "percona test cluster0"
+    namespace: "cluster-test"
+    enabled: false
+    # this needs the ENV variable HELM_EXPERIMENTAL_OCI=1 set
+    chart: "percona/pg-db"
+    version: "2.2.8" # helm search repo postgres-operator
+    # values file reference: https://artifacthub.io/packages/helm/percona/pg-db
