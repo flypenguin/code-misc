@@ -1,0 +1,35 @@
+version: '3.1'
+
+services:
+
+  ghost:
+    image: ghost:5-alpine
+    restart: always
+    ports:
+      - 9080:2368
+    environment:
+      database__client: mysql
+      database__connection__host: db
+      database__connection__user: ghost
+      database__connection__password: ghost
+      database__connection__database: ghost
+      url: http://localhost:9080
+      # contrary to the default mentioned in the linked documentation, this image defaults to NODE_ENV=production (so development mode needs to be explicitly specified if desired)
+      NODE_ENV: development
+
+  db:
+    # IT DOES NOT WORK WITH MARIADB
+    # https://forum.ghost.org/t/error-when-trying-to-view-analytics-er-bad-field-error/36429/5
+    image: mysql:8
+    command: '--default-authentication-plugin=mysql_native_password'
+    volumes:
+      - ./data/db:/var/lib/mysql
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=mariadb
+      - MYSQL_DATABASE=ghost
+      - MYSQL_USER=ghost
+      - MYSQL_PASSWORD=ghost
+    expose:
+      - 33306:3306
+      - 33061:33060

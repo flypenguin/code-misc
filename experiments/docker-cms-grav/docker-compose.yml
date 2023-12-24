@@ -1,0 +1,39 @@
+version: '3'
+services:
+
+  grav-app:
+    image: shinsenter/grav:latest
+    volumes:
+      - ./data/site:/var/www/html
+      - ./data/certs:/etc/ssl/web
+    environment:
+      TZ: Europe/Berlin
+      PUID: ${UID:-9999}
+      PGID: ${GID:-9999}
+    ports:
+      - "8080:80"
+      - "8443:443"
+    links:
+      - db
+      - redis
+
+
+  ## OTHER CONTAINERS SUCH AS REDIS OR DATABASE ###################################
+
+  db:
+    image: mariadb:latest
+    environment:
+      TZ: UTC
+      MYSQL_ROOT_PASSWORD: grav
+      MYSQL_DATABASE: grav
+    volumes:
+      - "./data/db/data:/var/lib/mysql"
+      - "./data/db/dump:/docker-entrypoint-initdb.d"
+    ports:
+      - "3306:3306"
+
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+
