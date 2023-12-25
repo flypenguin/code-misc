@@ -1,0 +1,5 @@
+configKubernetes:
+  # https://is.gd/XOG5cM, https://is.gd/wvfueG and https://is.gd/TwOmCt
+  enable_cross_namespace_secret: true
+
+  enable_pod_disruption_budget: false

@@ -74,7 +74,7 @@ apps:
     name: "postgres-operator"
     description: "zalando postgres operator"
     namespace: "postgres-operator"
-    enabled: false
+    enabled: true
     # this needs the ENV variable HELM_EXPERIMENTAL_OCI=1 set
     chart: "postgres-operator/postgres-operator"
     version: "1.10.1" # helm search repo postgres-operator

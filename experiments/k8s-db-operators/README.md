@@ -64,6 +64,28 @@ export PGPASSWORD=$(kubectl get secret -o json $CRUNCHY_SECRET | jq -r ".data.pa
 psql -h crunchy0-ha   -U crunchy0   crunchy0
 ```
 
+## Zalando Postgres Operator
+
+```bash
+# connect to database, generally multiple users available, see ...
+#    https://is.gd/mCBsLv  /  https://is.gd/TwOmCt  /  https://is.gd/PfnSMO
+ACID_SECRET="myprepareddb1-owner-user.acid-0.credentials.postgresql.acid.zalan.do"
+export PGPASSWORD=$(kubectl get secret -o json $ACID_SECRET | jq -r ".data.password" | base64 -d)
+psql -h acid-0   -U myprepareddb1_owner_user   myprepareddb1
+```
+
+Remarks:
+
+* Pro
+    * Convenient, a lot of things have been considered (see "complexity" ;)
+* Neutral
+    * Very AWS / Azure / GCP "minded"
+    * still "beta"
+* Con
+    * Very complex
+    * a _ton_ of Zalando-developed tech underneath ... (Patroni, Spilo)
+    * mainly developed from and for Zalando (?)
+
 ## Links
 
 * [CloudNativePG](https://cloudnative-pg.io/)

@@ -1,0 +1,42 @@
+# minimal example here: https://is.gd/F4yo5n
+# complete example here: https://is.gd/U8rwzb
+
+apiVersion: "acid.zalan.do/v1"
+kind: postgresql
+metadata:
+  # name "must start with the teamID followed by a dash" - see https://is.gd/pLSWNU
+  #name: SET (overridden) BY 'MAKE KUBE' COMMAND
+  #namespace: SET (overridden) BY 'MAKE KUBE' COMMAND
+spec:
+  # see https://is.gd/pLSWNU
+  volume:
+    size: 200Mi
+
+  #
+  # required fields
+  #
+  teamId: "acid"
+  numberOfInstances: 1
+
+  postgresql:
+    version: "15"
+
+  #
+  # optional fields
+  #
+  # create users and assign roles
+
+  users:
+    # this will only create users, not databases.
+    # format: {username: [permissions, ...]}
+    mysuperuser: [superuser, createdb]
+    myappuser: []
+
+  databases:
+    # format: {dbname: dbowner}
+    mydb0: myappuser
+
+  preparedDatabases:
+    myprepareddb0: {}
+    myprepareddb1:
+      defaultUsers: true
