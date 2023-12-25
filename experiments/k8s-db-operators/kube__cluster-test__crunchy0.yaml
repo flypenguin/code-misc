@@ -5,7 +5,9 @@
 apiVersion: postgres-operator.crunchydata.com/v1beta1
 kind: PostgresCluster
 metadata:
-  name: crunchy0
+  {}
+  #name: SET (overridden) BY 'MAKE KUBE' COMMAND
+  #namespace: SET (overridden) BY 'MAKE KUBE' COMMAND
 spec:
   postgresVersion: 15
   instances:

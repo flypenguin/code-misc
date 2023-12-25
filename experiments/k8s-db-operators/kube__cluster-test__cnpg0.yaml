@@ -3,7 +3,9 @@
 apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
 metadata:
-  name: cnpg0
+  {}
+  #name: SET (overridden) BY 'MAKE KUBE' COMMAND
+  #namespace: SET (overridden) BY 'MAKE KUBE' COMMAND
 spec:
   instances: 1
 
