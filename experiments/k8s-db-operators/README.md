@@ -46,9 +46,23 @@ apt-get install -y kubectl
 
 * You cannot configure multiple databases on a cluster declaratively
 
+```bash
+# connect to database, user defined in manifest
+CNPG0_APP_SECRET="cnpg0-app"
+export PGPASSWORD=$(kubectl get secret -o json $CNPG0_APP_SECRET | jq -r ".data.password" | base64 -d)
+psql -h cnpg0-rw   -U cnpg-user   cnpg
+```
+
 ## CrunchyData
 
 * You _must_ configure backups. This is kinda nice :)
+
+```bash
+# connect to database, cluster name = user name
+CRUNCHY_SECRET="crunchy0-pguser-crunchy0"
+export PGPASSWORD=$(kubectl get secret -o json $CRUNCHY_SECRET | jq -r ".data.password" | base64 -d)
+psql -h crunchy0-ha   -U crunchy0   crunchy0
+```
 
 ## Links
 
