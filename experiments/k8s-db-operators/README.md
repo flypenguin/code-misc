@@ -3,6 +3,9 @@
 ## Init (TL;DR)
 
 ```bash
+# creates namespace & debug pod with cluster admin permissions
+make itfr
+
 # must be first, installs the operators
 make helmsman
 
@@ -24,6 +27,20 @@ Then:
 
 
 ## Notes
+
+## Prepare debug pod
+
+... to install `kubectl` and `postgresql-client` (among other required things):
+
+```bash
+apt-get update && apt-get install -y dnsutils postgresql-client apt-transport-https ca-certificates curl gpg vim jq wget
+wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq && chmod +x /usr/bin/yq
+mkdir /etc/apt/keyrings
+curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.29/deb/ /' > /etc/apt/sources.list.d/kubernetes.list
+apt-get update
+apt-get install -y kubectl
+```
 
 ## CNPG
 

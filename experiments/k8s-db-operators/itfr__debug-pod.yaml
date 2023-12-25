@@ -1,0 +1,66 @@
+# generally, read this to understand service account tokens: https://is.gd/tqDAKW
+# also, this is helpful: https://is.gd/HGiXGZ
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cluster-test
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: cluster-test-admin
+  namespace: cluster-test
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: cluster-test-admin
+roleRef:
+  # use the pre-existing "admin" role :)
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: admin
+subjects:
+  - kind: ServiceAccount
+    name: cluster-test-admin
+    namespace: cluster-test
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: cluster-test-admin-serviceaccount-token
+  namespace: cluster-test
+  annotations:
+    kubernetes.io/service-account.name: cluster-test-admin
+type: kubernetes.io/service-account-token
+---
+# API: https://is.gd/soC3Ai / DOC: https://is.gd/pl5cdw
+apiVersion: v1
+kind: Pod
+metadata:
+  name: a-debug-pod
+  namespace: cluster-test
+  annotations:
+    purpose: test
+    can-be-deleted: "yes"
+    deleteme: "now"
+spec:
+  serviceAccountName: cluster-test-admin
+  automountServiceAccountToken: true
+  containers:
+    - name: shell
+      image: debian:bullseye
+      args: [sleep, infinity]
+      resources:
+        limits:
+          memory: "64Mi"
+          cpu: "250m"
+      volumeMounts:
+        - mountPath: /host
+          name: host-path-debug
+  volumes:
+    - name: host-path-debug
+      hostPath:
+        path: /Users/tm/Temp
+        type: Directory
