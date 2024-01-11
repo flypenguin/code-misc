@@ -1,0 +1,16 @@
+version: "3"
+
+services:
+  directus:
+    image: directus/directus:latest
+    ports:
+      - 8055:8055
+    volumes:
+      - ./data/db:/directus/database
+      - ./data/uploads:/directus/uploads
+    environment:
+      KEY: '45A22108-3DC4-4934-A869-9D7A1AA61B99'
+      SECRET: 'F5D0EFBE-E9FE-41BA-A12F-4B2B51EB9DE8'
+      ADMIN_EMAIL: ab@a3b3.de
+      ADMIN_PASSWORD: admin
+      WEBSOCKETS_ENABLED: true
