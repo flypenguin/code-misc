@@ -1,0 +1,5 @@
+tmp*
+data/
+!data/outputs/.gitkeep
+!data/staging/.gitkeep
+!data/raw/.gitkeep
