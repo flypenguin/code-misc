@@ -1,1 +1,1 @@
-dagster
+dagster==1.6.4
