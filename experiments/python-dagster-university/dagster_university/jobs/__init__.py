@@ -5,10 +5,12 @@ trips_by_week = AssetSelection.keys("trips_by_week")
 
 trip_update_job = define_asset_job(
     name="trip_update_job",
+    partitions_def=monthly_partition,
     selection=AssetSelection.all() - trips_by_week,
 )
 
 weekly_update_job = define_asset_job(
     name="weekly_update_job",
     selection=trips_by_week,
+    partitions_def=weekly_partition,
 )
