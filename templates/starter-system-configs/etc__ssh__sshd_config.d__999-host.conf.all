@@ -1,0 +1,9 @@
+PermitRootLogin prohibit-password
+PubkeyAuthentication yes
+HostbasedAuthentication no
+PasswordAuthentication no
+PermitEmptyPasswords no
+AllowAgentForwarding yes
+AllowTcpForwarding yes
+PermitTTY yes
+TCPKeepAlive yes
