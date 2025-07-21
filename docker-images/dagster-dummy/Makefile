@@ -2,32 +2,30 @@ SHELL := bash
 DEBUG ?= 0
 
 PYTHON_VERSION ?= 3.12
-BUILD_ARCHITECTURES ?= arm64 amd64
+# dagster does not support ARM64 ... :((
+BUILD_ARCHITECTURES ?= amd64
+BUILD_ARCH ?= this is not set in env
+DAGSTER_VERSION ?= this is not set in env
 
 ARCH_SUFFIX_SEPARATOR ?= -
 
 IMAGE_REGISTRY ?= docker.io
 IMAGE_REPOSITORY ?= flypenguin
 IMAGE_NAME ?= k8s-dagster-dummy
+IMAGE_BASE ?= $(IMAGE_REGISTRY)/$(IMAGE_REPOSITORY)/$(IMAGE_NAME)
+ARCH_SUFFIX = $(ARCH_SUFFIX_SEPARATOR)$(BUILD_ARCH)
+
+TAG = py$(PYTHON_VERSION)-dg$(DAGSTER_VERSION)
+IMAGE = $(IMAGE_BASE):$(TAG)
+BUILD_DIR = build.tmp/$(TAG)
+
+ARCH_TAG = $(TAG)$(ARCH_SUFFIX)
+ARCH_IMAGE = $(IMAGE)$(ARCH_SUFFIX)
+ARCH_BUILD_DIR = $(BUILD_DIR)$(ARCH_SUFFIX)
 
 
-
-build:
-	@\
-set -euo pipefail ; \
-chkcmd() { command -v "$$1" > /dev/null ; } ; \
-chkcmd podman && BUILDER=podman ; \
-chkcmd docker && BUILDER=docker ; \
-if [[ -z "$${BUILDER:-}" ]]; then \
-  echo "ERROR: no suitable build app found." ; \
-  false ; \
-fi ; \
-echo "Using builder: $$BUILDER" ; \
-cat dagster-versions.txt | sort -V | while read version ; do \
-  export DAGSTER_VERSION=$$version ; \
-  make _build_$$BUILDER ; \
-done ;
-.PHONY: build
+default: build
+.PHONY: default
 
 
 clean:
@@ -35,9 +33,62 @@ clean:
 .PHONY: build
 
 
+_helper:
+	@\
+printf '\
+_run() { \
+  DEBUG="$(DEBUG)" ; DEBUG="${DEBUG:-0}" ; \
+  (( DEBUG > 1 )) && return 0 ; \
+  local LOG="$$1" ; shift ; local RV=0 ; \
+  [[ "$${LOG_APPEND:-}" == "1" ]] || rm -f "$$LOG" ; \
+  echo -e "COMMAND: $$@\n\n" >> "$$LOG" ; \
+  echo ">>> $$@" ; \
+  "$$@" >> "$$LOG" 2>&1 || RV=$? ; \
+  if [[ "$$RV" != "0" ]] ; then cat "$$LOG" ; return 1 ; fi ; \
+  [[ "$${LOG_APPEND:-}" != "1" ]] || echo -e "\n\n" >> "$$LOG" ; \
+} ; \
+chkcmd() { command -v "$$1" > /dev/null ; } ; \
+silent() { "$$@" > /dev/null 2>&1 ; } ; \
+export \
+  PYTHON_VERSION="$(PYTHON_VERSION)" \
+  DAGSTER_VERSION="$(DAGSTER_VERSION)"  \
+  BUILD_ARCH="$(BUILD_ARCH)" \
+; \
+'
+.PHONY: _helper
+
+
+build:
+	@\
+set -euo pipefail ; \
+eval $$(make _helper) ; \
+chkcmd docker && BUILDER=docker ; \
+chkcmd podman && BUILDER=podman ; \
+if [[ -z "$${BUILDER:-}" ]]; then \
+  echo "ERROR: no suitable build app found." ; \
+  false ; \
+fi ; \
+echo "Using builder: $$BUILDER" ; \
+cat dagster-versions.txt \
+| sort -V \
+| while read DAGSTER_VERSION ; do \
+  for BUILD_ARCH in $(BUILD_ARCHITECTURES) ; do \
+    export \
+      PYTHON_VERSION="$(PYTHON_VERSION)" \
+      DAGSTER_VERSION="$${DAGSTER_VERSION}" \
+      BUILD_ARCH="$${BUILD_ARCH}" ; \
+    make _build_$${BUILDER}_single ; \
+  done ; \
+  make _create_manifest_$${BUILDER} ; \
+  make _push_manifest_$${BUILDER} ; \
+done
+.PHONY: build
+
+
 _create_uv_lock:
 	@\
 set -euo pipefail ; \
+eval $$(make _helper) ; \
 [[ "$(DEBUG)" != "1" ]] || set  ; \
 export DAGSTER_VERSION="$(DAGSTER_VERSION)" ; \
 export PYTHON_VERSION="$(PYTHON_VERSION)" ; \
@@ -56,61 +107,52 @@ done
 .PHONY: _create_uv_lock
 
 
-_build_podman: _create_uv_lock
+_build_podman_single:
 	@\
-_run() { \
-  (( $(DEBUG) > 1 )) && return 0 ; \
-  local LOG="$$1" ; shift ; local RV=0 ; \
-  [[ "$${LOG_APPEND:-}" == "1" ]] || rm -f "$$LOG" ; \
-  echo -e "COMMAND: $$@\n\n" >> "$$LOG" ; \
-  echo ">>> $$@" ; \
-  "$$@" >> "$$LOG" 2>&1 || RV=$? ; \
-  if [[ "$$RV" != "0" ]] ; then cat "$$LOG" ; return 1 ; fi ; \
-  [[ "$${LOG_APPEND:-}" != "1" ]] || echo -e "\n\n" >> "$$LOG" ; \
-} ; \
-silent() { "$$@" > /dev/null 2>&1 ; } ; \
 [[ "$(DEBUG)" != "1" ]] || set -x ; \
+[[ -n "$(BUILD_ARCH)" ]] ; \
 set -euo pipefail ; \
-TAG="py$(PYTHON_VERSION)-dg$(DAGSTER_VERSION)" ; \
-IMAGE_BASE="$(IMAGE_REGISTRY)/$(IMAGE_REPOSITORY)/$(IMAGE_NAME)" ; \
-IMAGE="$${IMAGE_BASE}:$${TAG}" ; \
-LATEST="$${IMAGE_BASE}:latest" ; \
-BUILT_IMAGES="" ; \
-BUILD_BASE="build.tmp/$${TAG}" ; \
-for BUILD_ARCH in $(BUILD_ARCHITECTURES) ; do \
-  silent pushd . ; \
-  ARCH_SUFFIX="$(ARCH_SUFFIX_SEPARATOR)$${BUILD_ARCH}" ; \
-  BUILD_DIR="$${BUILD_BASE}$${ARCH_SUFFIX}" ; \
-  ARCH_TAG="$${TAG}$${ARCH_SUFFIX}" ; \
-  ARCH_IMAGE="$${IMAGE}$${ARCH_SUFFIX}" ; \
-  if [[ ! -d "$$BUILD_DIR" ]]; then \
-    mkdir -p "$$BUILD_DIR" ; \
-    cp -ar "configfiles/$${ARCH_TAG}/"* _templates/src _templates/Dockerfile "$$BUILD_DIR/" ; \
-  fi ; \
-  cd "$$BUILD_DIR" ; \
-  rm -f *.log ; \
-  LOGFILE= ; \
-  _run "podman-$${BUILD_ARCH}-build.log" \
-    podman build \
-      -f Dockerfile \
-      --arch=$${BUILD_ARCH} \
-      --build-arg PYTHON_BASE=$(PYTHON_VERSION) \
-      -t "$${ARCH_IMAGE}" ; \
-  _run "podman-$${BUILD_ARCH}-push.log" \
-    podman push \
-      "$${ARCH_IMAGE}" ; \
-  BUILT_IMAGES="$${BUILT_IMAGES} $${ARCH_IMAGE}" ; \
-  echo "$$ARCH_IMAGE" > IMAGE.log ; \
-  silent popd ; \
+eval $$(make _helper) ; \
+make _create_uv_lock ; \
+rm -rf "$(ARCH_BUILD_DIR)}" ; mkdir -p "$(ARCH_BUILD_DIR)" ; \
+cp -ar "configfiles/$(ARCH_TAG)/"* _templates/src _templates/Dockerfile "$(ARCH_BUILD_DIR)/" ; \
+cd "$(ARCH_BUILD_DIR)" ; \
+_run "podman-$(BUILD_ARCH)-build.log" \
+  podman build \
+    -f Dockerfile \
+    --arch=$(BUILD_ARCH) \
+    --build-arg PYTHON_BASE=$(PYTHON_VERSION) \
+    -t "$(ARCH_IMAGE)" ; \
+echo "$(ARCH_IMAGE)" > IMAGE_NAME
+.PHONY: _build_podman_single
+
+
+_create_manifest_podman:
+	@\
+eval $$(make _helper) ; \
+rm -rf "$(BUILD_DIR)" ; mkdir -p "$(BUILD_DIR)" ; cd "$(BUILD_DIR)" ; \
+for ARCH_DIR in "../$(TAG)-"* ; do \
+  cat "$${ARCH_DIR}/IMAGE_NAME" >> BUILT_IMAGES ; \
 done ; \
-mkdir -p "$$BUILD_BASE" ; cd "$$BUILD_BASE" ; \
-echo "$$BUILT_IMAGES" | xargs | sed -E 's/ +/\n/g' > BUILT_IMAGES ; \
-for USE_TAG in "$${TAG}" "latest" ; do \
+BUILT_IMAGES="$(cat BUILT_IMAGES | tr "\n" " " | xargs | sed -E 's/ +/ /g')" ; \
+for USE_TAG in "$(TAG)" "latest" ; do \
+  MANIFEST="$(IMAGE_BASE):$${USE_TAG}" ; \
+  podman manifest exists "$${MANIFEST}" \
+    && podman manifest remove "$${MANIFEST}" \
+    || true ; \
   _run "podman-manifest-$${USE_TAG}-create.log" \
     podman manifest \
-      create -a "$${IMAGE_BASE}:$${USE_TAG}" $${BUILT_IMAGES} ; \
+      create "$(IMAGE_BASE):$${USE_TAG}" $${BUILT_IMAGES} ; \
+done
+.PHONY: _create_manifest
+
+
+_push_manifest_podman:
+	@\
+eval $$(make _helper) ; \
+for USE_TAG in "$(TAG)" "latest" ; do \
   _run "podman-manifest-$${USE_TAG}-push.log" \
     podman manifest \
-      push --all "$${IMAGE_BASE}:$${USE_TAG}" ; \
-done ;
-.PHONY: _build_podman
+      push --all "$(IMAGE_BASE):$${USE_TAG}" ; \
+done
+.PHONY: _push_manifest

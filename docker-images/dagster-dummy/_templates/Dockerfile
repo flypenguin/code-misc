@@ -60,35 +60,44 @@ RUN --mount=type=cache,target=/root/.cache \
 
 # =================================================================================================
 
-
-FROM python:${PYTHON_BASE}-bookworm
+FROM python:${PYTHON_BASE}-slim-bookworm
 
 # Optional: add the application virtualenv to search path.
-ENV PATH=/app/bin:$PATH
-
-RUN env | grep PY
+ENV PATH=/app/bin:$PATH \
+    DAGSTER_HOME=/opt/dagster/dagster-home
 
 RUN <<EOT
-groupadd -r app
-useradd -r -d /app -g app -N app
+groupadd -r dagster
+useradd -r -d "$DAGSTER_HOME" -g dagster dagster
 EOT
 
+# create the dagster HOME dir
+RUN mkdir -p "$DAGSTER_HOME" && chown dagster:dagster "$DAGSTER_HOME"
+
+COPY --from=builder --chown=dagster:dagster /app /app
+
+USER dagster
+WORKDIR $DAGSTER_HOME
+
+# WE NEED THIS. The "load_from_defs_folder()" dagster function _wants_ a "pyproject.toml"
+# file to read the info from. so we copy it over (into "/opt/dagster", one directory _above_
+# $DAGSTER_HOME), and call "load_..." with "project_root=Path('..')":
+#
+#         @definitions
+#         def defs():
+#             return load_from_defs_folder(project_root=Path(".."))
+#
+#  -->                                                       ^^^^^
+#
+COPY ./uv.lock ./pyproject.toml "$DAGSTER_HOME"
+
 STOPSIGNAL SIGINT
-
-COPY --from=builder --chown=app:app /app /app
-
-# If your application is NOT a proper Python package that got
-# pip-installed above, you need to copy your application into
-# the container HERE:
-# COPY . /app/whereever-your-entrypoint-finds-it
-
-USER app
-WORKDIR /app
 
 # Strictly optional, but I like it for introspection of what I've built
 # and run a smoke test that the application can, in fact, be imported.
 RUN <<EOT
+pwd
 python -V
 python -Im site
-#python -Ic 'import the_app'
+python -c 'from dagster_dummy.definitions import defs'
 EOT
