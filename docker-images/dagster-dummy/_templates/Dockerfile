@@ -60,17 +60,19 @@ RUN --mount=type=cache,target=/root/.cache \
 
 # =================================================================================================
 
+
 FROM python:${PYTHON_BASE}-slim-bookworm
 
 # Optional: add the application virtualenv to search path.
 ENV PATH=/app/bin:$PATH \
+    DAGSTER_PARENT=/opt/dagster \
     DAGSTER_HOME=/opt/dagster/dagster-home
 
 RUN <<EOT
 groupadd -r dagster
 useradd -r -d "$DAGSTER_HOME" -g dagster dagster
-EOT
 
+EOT
 # create the dagster HOME dir
 RUN mkdir -p "$DAGSTER_HOME" && chown dagster:dagster "$DAGSTER_HOME"
 
@@ -89,7 +91,7 @@ WORKDIR $DAGSTER_HOME
 #
 #  -->                                                       ^^^^^
 #
-COPY ./uv.lock ./pyproject.toml "$DAGSTER_HOME"
+COPY uv.lock pyproject.toml "$DAGSTER_PARENT"
 
 STOPSIGNAL SIGINT
 
