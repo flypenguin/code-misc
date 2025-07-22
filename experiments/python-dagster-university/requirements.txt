@@ -1,1 +1,1 @@
-dagster==1.6.4
+dagster==1.10.16
