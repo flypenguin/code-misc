@@ -1,0 +1,60 @@
+rbac:
+  enabled: true
+
+ingress:
+  enabled: true
+  certManager: true
+  className: nginx
+  tls:
+    enabled: false # ingress does that for us.
+
+pod:
+  extraVolumes:
+    - name: users-database
+      secret:
+        secretName: authelia-users-database
+        optional: false
+
+  extraVolumeMounts:
+    - name: users-database
+      mountPath: /config/users_database.yml
+      readOnly: true
+      subPath: users_database.yml
+
+configMap:
+  authentication_backend:
+    refresh_interval: always
+    file:
+      enabled: true
+      watch: true
+      search:
+        email: true
+        case_insensitive: false
+    password_change:
+      disable: false
+    password_policy:
+      enabled: true
+      zxcvbn:
+        enabled: true
+        min_score: 3
+    password_reset:
+      disable: false
+  notifier:
+    filesystem:
+      enabled: true
+  session:
+    cookies:
+      - domain: localhost.traefik.me
+        subdomain: auth
+
+storage:
+  postgres:
+    deploy: true
+
+postgresql:
+  # default values, but here to see how we configure this.
+  auth:
+    postgresPassword: authelia
+    username: authelia
+    password: authelia
+    database: authelia
