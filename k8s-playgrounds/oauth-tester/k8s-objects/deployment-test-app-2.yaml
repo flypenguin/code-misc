@@ -1,0 +1,29 @@
+# API: https://is.gd/4tTkhl / DOC: https://is.gd/NzAS15
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: oauth-test-app-2
+  labels:
+    app.kubernetes.io/name: oauth-test-app-2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: oauth-test-app-2
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: oauth-test-app-2
+    spec:
+      containers:
+        - name: flypenguin-test
+          image: flypenguin/test
+          ports:
+            - containerPort: 80
+          env:
+            - name: COLOR
+              value: mediumseagreen
+          resources:
+            limits:
+              memory: "64Mi"
+              cpu: "500m"

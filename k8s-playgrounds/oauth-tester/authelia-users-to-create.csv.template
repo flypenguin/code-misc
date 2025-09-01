@@ -1,0 +1,4 @@
+# user_name,display_name,email_address,groups,plaintext_password
+donni,Donald Trump,donald.trump@whitehouse.gov,president,covfefe
+homer,Homer Simpson,homer.simpson@springfield.us,dumbass,d'oh
+test,Test User,test@testme.com,admin;user,test
