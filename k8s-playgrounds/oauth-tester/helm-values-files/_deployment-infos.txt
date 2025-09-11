@@ -1,0 +1,5 @@
+CHART "name" "repo/chart"
+CHART authelia authelia/authelia
+CHART cert-manager cert-manager/cert-manager
+CHART traefik traefik/traefik
+NS "name" "namespace-name"

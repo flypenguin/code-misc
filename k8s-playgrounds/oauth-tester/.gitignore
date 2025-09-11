@@ -1,2 +1,4 @@
-authelia-users*
-!authelia-users*.template
+*users.csv
+deploy-*.txt
+apply-*.txt
+helm-default-values/

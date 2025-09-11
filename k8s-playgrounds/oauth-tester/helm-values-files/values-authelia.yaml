@@ -32,24 +32,31 @@ configMap:
         case_insensitive: false
     password_change:
       disable: false
-    password_policy:
-      enabled: true
-      zxcvbn:
-        enabled: true
-        min_score: 3
     password_reset:
       disable: false
   notifier:
     filesystem:
       enabled: true
+  password_policy:
+    zxcvbn:
+      enabled: true
+      min_score: 3
   session:
     cookies:
       - domain: localhost.traefik.me
         subdomain: auth
-
-storage:
-  postgres:
-    deploy: true
+  storage:
+    postgres:
+      enabled: true
+      deploy: true
+      address: "tcp://authelia-postgresql.authelia.svc.cluster.local:5432"
+      database: "authelia"
+      schema: "public"
+      username: "authelia"
+      password:
+        secret_name: ~
+        value: "authelia"
+        path: "storage.postgres.password.txt"
 
 postgresql:
   # default values, but here to see how we configure this.

@@ -3,37 +3,35 @@
 # /// script
 # requires-python = ">=3.12"
 # dependencies = [
-#     "bcrypt",
+#     "argon2-cffi",
 #     "pyyaml",
 # ]
 # ///
 
-import base64
 import csv
-import hashlib
-import os
 import yaml
 from argparse import ArgumentParser
 
-
-SALT_LEN = 16
-N = 2**14  # cost
-R = 8  # block size
-P = 1  # parallelization
-DKLEN = 64  # length of derived key
+from argon2 import PasswordHasher as ArgonHasher, Type
 
 
-def get_hash(password: str) -> str:
-    pw_bytes = password.encode()  # str → bytes
-    salt = os.urandom(SALT_LEN)
-    key = hashlib.scrypt(pw_bytes, salt=salt, n=N, r=R, p=P, dklen=DKLEN)
+# class argon2.PasswordHasher(time_cost=3, memory_cost=65536, parallelism=4, hash_len=32, salt_len=16, encoding='utf-8', type=Type.ID)
 
-    # Encode salt and key in URL-safe base64
-    salt_b64 = base64.urlsafe_b64encode(salt).decode().rstrip("=")
-    key_b64 = base64.urlsafe_b64encode(key).decode().rstrip("=")
 
-    # Construct a string similar to the Argon2 format
-    return f"$scrypt$ln={N.bit_length() - 1},r={R},p={P}${salt_b64}${key_b64}"
+def argon2id_hash(
+    password, time_cost=3, memory_cost=65536, parallelism=4, hash_len=32, salt_len=16, encoding="utf-8", type_=Type.ID
+):
+    hasher = ArgonHasher(
+        time_cost=time_cost,
+        memory_cost=memory_cost,
+        parallelism=parallelism,
+        hash_len=hash_len,
+        salt_len=salt_len,
+        encoding=encoding,
+        type=type_,
+    )
+    hash = hasher.hash(password)
+    return hash
 
 
 if __name__ == "__main__":
@@ -55,7 +53,7 @@ if __name__ == "__main__":
                 "displayname": display_name.strip(),
                 "email": email_address.strip().lower(),
                 "groups": [g.strip() for g in groups.split(";")],
-                "password": get_hash(plaintext_password.strip()),
+                "password": argon2id_hash(plaintext_password.strip()),
             }
 
         print(yaml.dump({"users": users}, indent=2))

@@ -1,0 +1,13 @@
+crds:
+  # non-default, see https://is.gd/yLE0Dy
+  enabled: true
+  # non-default, see https://is.gd/Bk3hJH
+  keep: false
+  # non-default, see https://is.gd/m1qYKE
+
+enableCertificateOwnerRef: true
+# set "advanced" configs - see here: https://is.gd/socRJF
+#config: {...}
+
+prometheus:
+  enabled: false
