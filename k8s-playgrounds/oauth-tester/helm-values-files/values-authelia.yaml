@@ -3,10 +3,25 @@ rbac:
 
 ingress:
   enabled: true
+  # annotations: { cert-manager.io/cluster-issuer: playground-ca }
   certManager: true
-  className: nginx
   tls:
-    enabled: false # ingress does that for us.
+    enabled: true
+    secret: "tls-me-traefik-localhost-auth"
+  gatewayAPI:
+    enabled: false
+  traefikCRD:
+    enabled: false
+    disableIngressRoute: false
+    middlewares:
+      auth:
+        nameOverride: ""
+        endpointOverride: ""
+        authResponseHeaders:
+          - "Remote-User"
+          - "Remote-Name"
+          - "Remote-Email"
+          - "Remote-Groups"
 
 pod:
   extraVolumes:
@@ -14,12 +29,31 @@ pod:
       secret:
         secretName: authelia-users-database
         optional: false
+    - # to read the "email" notifications
+      name: authelia-notifications
+      emptyDir: {}
 
   extraVolumeMounts:
     - name: users-database
       mountPath: /config/users_database.yml
       readOnly: true
       subPath: users_database.yml
+    - name: authelia-notifications
+      mountPath: /authelia-notifications
+
+  extraContainers:
+    - # to read the "email" notifications
+      name: filemanager
+      image: filebrowser/filebrowser
+      args: ["-p", "28080", "--noauth", "-r", "/authelia-notifications"]
+      securityContext:
+        runAsUser: 0
+      ports:
+        - containerPort: 28080
+          name: filemanager
+      volumeMounts:
+        - name: authelia-notifications
+          mountPath: /authelia-notifications
 
 configMap:
   authentication_backend:
@@ -37,6 +71,7 @@ configMap:
   notifier:
     filesystem:
       enabled: true
+      filename: /authelia-notifications/notification.txt
   password_policy:
     zxcvbn:
       enabled: true

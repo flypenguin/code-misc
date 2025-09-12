@@ -26,18 +26,30 @@ CLUSTER_URL = localhost.traefik.me
 
 helm-values-files/deploy-%.txt: helm-values-files/values-%.yaml
 	@$(SCRIPT_START) ; \
+	rm -f "$@" "$@.tmp"; \
 	name=$*; \
-	chart="$$(cat helm-values-files/_deployment-infos.txt | grep -E '^CHART $*' | cut -d " " -f 3)" ; \
-	ns="$$(cat helm-values-files/_deployment-infos.txt | grep -E '^NS $*' | cut -d " " -f 3)" ; \
+	chart="$$(\
+	  cat helm-values-files/_deployment-infos.txt \
+	  | grep -E '^CHART $*' \
+	  | cut -d " " -f 3 \
+	  || true \
+	)" ; \
+	ns="$$(\
+	  cat helm-values-files/_deployment-infos.txt \
+	  | grep -E '^NS $*' \
+	  | cut -d " " -f 3 \
+	  || true \
+	)" ; \
 	[[ -z "$$chart" ]] && chart="$*" ; \
 	[[ -z "$$ns" ]] && ns="$*" ; \
 	(\
 	  set -x ; \
 	  helm upgrade -i --create-namespace -n $$ns -f $< $* $$chart > $@.tmp 2>&1 \
-	) && mv $@.tmp $@ || (cat $@.tmp && rm $@.tmp)
+	) && mv $@.tmp $@ || cat $@.tmp
 
 k8s-objects/apply-%.txt: k8s-objects/k8s-%.yaml
 	@$(SCRIPT_START) ; \
+	rm -f "$@" "$@.tmp"; \
 	name=$*; \
 	(\
 	  set -x ; \
