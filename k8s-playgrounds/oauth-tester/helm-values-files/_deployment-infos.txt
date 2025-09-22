@@ -1,5 +1,8 @@
 CHART "name" "repo/chart"
 CHART authelia authelia/authelia
+CHART authelia-ldap authelia/authelia
 CHART cert-manager cert-manager/cert-manager
 CHART traefik traefik/traefik
+CHART dex dex/dex
+CHART external-secrets external-secrets/external-secrets
 NS "name" "namespace-name"

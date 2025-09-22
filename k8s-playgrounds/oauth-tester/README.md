@@ -15,6 +15,10 @@ make prepare
 make deploy
 ```
 
+## Available URLs
+
+TBD ...
+
 ## Testing authentication
 
 ...

@@ -33,6 +33,19 @@ pod:
       name: authelia-notifications
       emptyDir: {}
 
+  env:
+    - # https://is.gd/v9hRop
+      # enabled templating ...
+      name: X_AUTHELIA_CONFIG_FILTERS
+      value: "template"
+    - # https://is.gd/yHegFy -- authelia go templating reference
+      # adds an ENV var from a secret. see "configMap.identityProviders.hmac" below.
+      name: HMAC_VALUE
+      valueFrom:
+        secretKeyRef:
+          name: authelia-hmac-value
+          key: hmac
+
   extraVolumeMounts:
     - name: users-database
       mountPath: /config/users_database.yml
@@ -68,18 +81,33 @@ configMap:
       disable: false
     password_reset:
       disable: false
+
+  identity_providers:
+    oidc:
+      # THIS DOCUMENTATION IS INCOMPLETE: https://is.gd/o84ZFQ
+      # refer to the example values.yaml !!
+      hmac_secret:
+        # WE generate this secret, and it now must be added to "secrets.additionalSecrets" below.
+        # otherwise deployment fails with an error message.
+        disabled: true
+        secret_name: "authelia-hmac-value"
+        path: hmac
+
   notifier:
     filesystem:
       enabled: true
       filename: /authelia-notifications/notification.txt
+
   password_policy:
     zxcvbn:
       enabled: true
       min_score: 3
+
   session:
     cookies:
       - domain: localhost.traefik.me
         subdomain: auth
+
   storage:
     postgres:
       enabled: true
@@ -100,3 +128,10 @@ postgresql:
     username: authelia
     password: authelia
     database: authelia
+
+secret:
+  additionalSecrets:
+    authelia-hmac-value:
+      path: ""
+      items:
+        - key: hmac

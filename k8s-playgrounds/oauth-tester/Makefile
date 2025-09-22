@@ -22,6 +22,7 @@ SCRIPT_START = cd $(MAKEFILE_DIR) ; set -euo pipefail
 CLUSTER_HIGH_PORT_HTTPS = 8443
 CLUSTER_HIGH_PORT_HTTP = 8080
 CLUSTER_URL = localhost.traefik.me
+CLUSTER_CREATE_NAMESPACES = authelia
 
 
 helm-values-files/deploy-%.txt: helm-values-files/values-%.yaml
@@ -30,7 +31,7 @@ helm-values-files/deploy-%.txt: helm-values-files/values-%.yaml
 	name=$*; \
 	chart="$$(\
 	  cat helm-values-files/_deployment-infos.txt \
-	  | grep -E '^CHART $*' \
+	  | grep -E '^CHART $* ' \
 	  | cut -d " " -f 3 \
 	  || true \
 	)" ; \
@@ -140,10 +141,11 @@ prepare-cluster:
 
 
 prepare-helm:
-	helm repo add     oauth2-proxy      https://oauth2-proxy.github.io/manifests/
-	helm repo add     dex               https://charts.dexidp.io
 	helm repo add     authelia          https://charts.authelia.com
 	helm repo add     cert-manager      https://charts.jetstack.io
+	helm repo add     dex               https://charts.dexidp.io
+	helm repo add     external-secrets  https://charts.external-secrets.io
+	helm repo add     oauth2-proxy      https://oauth2-proxy.github.io/manifests/
 	helm repo add     traefik           https://traefik.github.io/charts
 	helm repo update
 .PHONY: prepare-helm
@@ -155,7 +157,7 @@ prepare: prepare-cluster prepare-users prepare-helm
 
 deploy-namespaces:
 	@$(SCRIPT_START) ; \
-	for ns in authelia ; do \
+	for ns in $(CLUSTER_CREATE_NAMESPACES) ; do \
 	  if ! $(KCMD) get ns "$$ns" > /dev/null 2>&1 ; then \
 	    $(KCMD) create ns "$$ns" ; \
 	  fi ; \
