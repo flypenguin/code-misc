@@ -1,0 +1,163 @@
+# Default values for Traefik
+# This is a YAML-formatted file.
+# Declare variables to be passed into templates
+
+ingressClass:
+  enabled: true
+  isDefaultClass: true
+  name: "traefik"
+
+experimental:
+  abortOnPluginFailure: false
+  fastProxy:
+    enabled: false
+    debug: false
+  kubernetesGateway:
+    enabled: false
+  plugins: {}
+  localPlugins: {}
+
+gateway:
+  enabled: false
+  name: "traefik-default"
+  listeners:
+    web:
+      port: 8080
+      hostname: "host.localhost.traefik.me"
+      protocol: HTTP
+    websecure:
+      port: 8443
+      hostname: "host.localhost.traefik.me"
+      protocol: HTTPS
+
+gatewayClass:
+  enabled: false
+  name: "traefik-default"
+  labels: {}
+
+ingressRoute:
+  dashboard:
+    enabled: true
+    matchRule: Host(`traefik.localhost.traefik.me`)
+    services:
+      - name: api@internal
+        kind: TraefikService
+    entryPoints: ["web"]
+    tls: {}
+  healthcheck:
+    enabled: true
+    matchRule: Host(`traefik.localhost.traefik.me`) && PathPrefix(`/ping`)
+    services:
+      - name: ping@internal
+        kind: TraefikService
+    entryPoints: ["websecure"]
+    middlewares: []
+    tls: {}
+
+providers: # @schema additionalProperties: false
+  kubernetesCRD:
+    enabled: true
+    allowCrossNamespace: false
+    allowExternalNameServices: true
+    allowEmptyServices: true
+
+  kubernetesIngress:
+    enabled: true
+    allowExternalNameServices: true
+    allowEmptyServices: true
+    nativeLBByDefault: false
+
+  kubernetesGateway:
+    enabled: false
+
+  file:
+    enabled: false
+
+logs:
+  access:
+    enabled: true
+    addInternals: true
+
+metrics:
+  addInternals: true
+  ## Prometheus is enabled by default.
+  ## It can be disabled by setting "prometheus: null"
+  prometheus:
+    entryPoint: metrics
+
+ports:
+  traefik:
+    port: 8090
+    hostPort: 8090
+    expose:
+      default: false
+    exposedPort: 8090
+    protocol: TCP
+  web:
+    port: 8080
+    hostPort: 8080 # IMPORTANT
+    asDefault: false
+    protocol: TCP
+    # this does not work, because it uses :8443 in the redirected url.
+    # let's _rewrite_ this instead.
+    redirections:
+      entryPoint:
+        to: websecure
+        scheme: https
+        permanent: true
+        port: 443 # https://is.gd/vXqGqm
+    # containerPort: 8080 # no effect?
+    # targetPort: 8080 # no effect?
+    # nodePort: 8080 # not the correct port range ...
+    #expose:
+    #  default: true
+    #exposedPort: 8080
+    #forwardedHeaders:
+    #  # -- Trust forwarded headers information (X-Forwarded-*).
+    #  trustedIPs: []
+    #  insecure: false
+    #proxyProtocol:
+    #  # -- Enable the Proxy Protocol header parsing for the entry point
+    #  trustedIPs: []
+    #  insecure: false
+  websecure:
+    asDefault: true
+    port: 8443
+    hostPort: 8443 # IMPORTANT
+    # containerPort:
+    # targetPort:
+    # nodePort:
+    # allowACMEByPass: false
+    expose:
+      default: true
+    exposedPort: 8443
+    protocol: TCP
+    forwardedHeaders:
+      trustedIPs: []
+      insecure: false
+    proxyProtocol:
+      trustedIPs: []
+      insecure: false
+    tls:
+      enabled: true
+      options: ""
+      certResolver: ""
+      domains: []
+  metrics:
+    port: 9100
+    expose:
+      default: false
+    protocol: TCP
+
+tlsOptions: {}
+tlsStore: {}
+
+service:
+  enabled: true
+  single: true
+  type: LoadBalancer
+  # type: NodePort
+
+rbac:
+  enabled: true
+  namespaced: false

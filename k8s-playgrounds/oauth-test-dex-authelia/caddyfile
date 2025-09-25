@@ -1,0 +1,25 @@
+{
+	# publicly resolves to 127.0.0.1
+	default_sni localhost.traefik.me
+
+	# since this is no public dns ...
+	local_certs
+}
+
+:80 {
+	reverse_proxy * {
+		to localhost:8080
+	}
+}
+
+:443 {
+	tls internal {
+		on_demand
+	}
+	reverse_proxy * {
+		to https://localhost:8443
+		transport http {
+			tls_insecure_skip_verify
+		}
+	}
+}

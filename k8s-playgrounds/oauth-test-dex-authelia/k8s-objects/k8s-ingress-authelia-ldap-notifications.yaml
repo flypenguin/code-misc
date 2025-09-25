@@ -1,0 +1,24 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: authelia-ldap-notifications
+  namespace: authelia-ldap
+  annotations:
+    cert-manager.io/cluster-issuer: internal-ca
+spec:
+  tls:
+    - hosts:
+        - "auth-ldap-notifications.localhost.traefik.me"
+      secretName: tls-auth-ldap-notifications
+  rules:
+    - host: auth-ldap-notifications.localhost.traefik.me
+      http:
+        paths:
+          - pathType: Prefix
+            path: /
+            backend:
+              service:
+                name: authelia-ldap-notifications
+                port:
+                  name: filemanager

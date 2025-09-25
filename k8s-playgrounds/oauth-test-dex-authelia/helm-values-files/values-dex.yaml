@@ -1,0 +1,98 @@
+---
+replicaCount: 1
+namespaceOverride: "dex"
+hostAliases: []
+https:
+  enabled: false
+
+configSecret:
+  create: true
+  # name: ""
+
+envVars:
+  - name: OIDC_SECRET_AUTHELIA_LOCAL
+    valueFrom:
+      secretKeyRef:
+        name: oidc-client-dex-authelia-local
+        key: client-secret
+  - name: OIDC_CLIENT_NAME_AUTHELIA_LOCAL
+    valueFrom:
+      secretKeyRef:
+        name: oidc-client-dex-authelia-local
+        key: client-id
+
+config:
+  # config examples:
+  #   - dev config: https://is.gd/pijoRf
+  #   - AD connect: https://is.gd/AjKFns
+
+  # required, but weirdly nowhere documented ...
+  issuer: https://dex.localhost.traefik.me
+
+  # required
+  storage:
+    type: kubernetes
+    config:
+      inCluster: true
+
+  # naturally, required ...
+  connectors:
+    - type: oidc
+      id: authelia-local
+      name: Authelia Local Users
+      config:
+        issuer: https://auth-local.localhost.traefik.me
+
+        # Connector config values starting with a "$" will read from the environment.
+        clientID: $OIDC_SECRET_AUTHELIA_LOCAL
+        clientSecret: $OIDC_CLIENT_ID_AUTHELIA_LOCAL
+
+        # Dex's issuer URL + "/callback"
+        redirectURI: https://dex.localhost.traefik.me/callback
+
+        # Default is profile and email, full list at https://dexidp.io/docs/custom-scopes-claims-clients/
+        # scopes: [profile, email, groups]
+
+        # Don't insist on verified email addresses
+        # insecureSkipEmailVerified: true
+
+        # if true, the connector will query the UserInfo endpoint for additional claims.
+        # https://openid.net/specs/openid-connect-core-1_0.html#UserInfo
+        # getUserInfo: true
+
+        # The set claim is used as user id. Default: "sub", list at https://openid.net/specs/openid-connect-core-1_0.html#Claims
+        # userIDKey: nickname
+
+        # The set claim is used as user name. Default: "name"
+        # userNameKey: nickname
+
+        # Map non-standard claims returned by provicers. https://openid.net/specs/openid-connect-core-1_0.html#Claims
+        claimMapping:
+          # The set claim is used as preferred username.
+          # Default: preferred_username
+          # preferred_username: other_user_name
+
+service:
+  type: ClusterIP
+  ports:
+    http:
+      port: 5556
+    https:
+      port: 5554
+
+ingress:
+  enabled: true
+  # className: ""
+  # annotations: {}
+  hosts:
+    - host: dex.localhost.traefik.me
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls: []
+
+serviceMonitor:
+  enabled: false
+
+networkPolicy:
+  enabled: false

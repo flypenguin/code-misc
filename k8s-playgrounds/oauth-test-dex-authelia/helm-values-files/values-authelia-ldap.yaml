@@ -1,0 +1,244 @@
+---
+rbac:
+  enabled: true
+
+ingress:
+  gatewayAPI:
+    enabled: false
+  traefikCRD:
+    enabled: false
+    disableIngressRoute: false
+    middlewares:
+      auth:
+        nameOverride: ""
+        endpointOverride: ""
+        authResponseHeaders:
+          - "Remote-User"
+          - "Remote-Name"
+          - "Remote-Email"
+          - "Remote-Groups"
+
+pod:
+  env:
+    - # https://is.gd/v9hRop
+      # enabled templating ...
+      name: X_AUTHELIA_CONFIG_FILTERS
+      value: "template"
+    - # https://is.gd/yHegFy -- authelia go templating reference
+      # adds an ENV var from a secret. see "configMap.identityProviders.hmac" below.
+      name: HMAC_VALUE
+      valueFrom:
+        secretKeyRef:
+          name: authelia-ldap-hmac-value
+          key: hmac
+
+  extraVolumes:
+    - # to read the "email" notifications
+      name: authelia-ldap-notifications
+      emptyDir: {}
+
+  extraVolumeMounts:
+    - name: authelia-ldap-notifications
+      mountPath: /authelia-notifications
+
+  extraContainers:
+    - # to read the "email" notifications
+      name: filemanager
+      image: filebrowser/filebrowser
+      args: ["-p", "28080", "--noauth", "-r", "/authelia-notifications"]
+      securityContext:
+        runAsUser: 0
+      ports:
+        - containerPort: 28080
+          name: filemanager
+      volumeMounts:
+        - name: authelia-ldap-notifications
+          mountPath: /authelia-notifications
+
+configMap:
+  authentication_backend:
+    ldap:
+      address: "ldap://127.0.0.1"
+      implementation: "custom"
+      timeout: "5s"
+      start_tls: false
+      tls:
+        server_name: "ldap.localhost.traefik.me"
+        skip_verify: true
+        minimum_version: "TLS1.2"
+        maximum_version: "TLS1.3"
+      pooling:
+        enable: false
+        count: 5
+        retries: 2
+        timeout: "10 seconds"
+      base_dn: "DC=localhost,DC=traefik.me"
+      additional_users_dn: "OU=users"
+      users_filter: "(&({username_attribute}={input})(objectClass=person))"
+      additional_groups_dn: "OU=groups"
+      groups_filter: "(&(member={dn})(objectClass=groupOfNames))"
+      #group_search_mode: "filter"
+      permit_referrals: false
+      permit_unauthenticated_bind: false
+      permit_feature_detection_failure: false
+      user: "CN=admin,DC=localhost,DC=traefik.me"
+      # again OBSOLETE docs, refer to this: https://is.gd/iXWSLJ
+      password:
+        disabled: false
+        secret_name: ~
+        value: ""
+        path: "authentication.ldap.password.txt"
+      attributes:
+        distinguished_name: "distinguishedName"
+        username: "uid"
+        display_name: "displayName"
+        family_name: "sn"
+        given_name: "givenName"
+        middle_name: "middleName"
+        nickname: ""
+        gender: ""
+        birthdate: ""
+        website: "wWWHomePage"
+        profile: ""
+        picture: ""
+        zoneinfo: ""
+        locale: ""
+        phone_number: "telephoneNumber"
+        phone_extension: ""
+        street_address: "streetAddress"
+        locality: "l"
+        region: "st"
+        postal_code: "postalCode"
+        country: "c"
+        mail: "mail"
+        member_of: "memberOf"
+        group_name: "cn"
+        extra:
+          extra_example:
+            name: ""
+            multi_valued: false
+            value_type: "string"
+
+  identity_providers:
+    # for all the secret mounting and usage see this:
+    #   - https://is.gd/XeHUqZ (INCOMPLETE!)
+    #   - https://is.gd/nq0PHf (full config reference)
+    #   - https://is.gd/ZAxz96 (how to use secrets)
+    # secrets mounted below under "secret.additionalSecrets.[...]"
+    oidc:
+      # NO LONGER A STRING. see here: https://is.gd/zNwgrE
+      # we mount that secret below. the config says "use value from '/secrets/authelia-ldap-hmac-value/hmac'"
+      hmac_secret:
+        disabled: true
+        secret_name: "authelia-ldap-hmac-value"
+        path: hmac
+      jwks:
+        - key_id: "authelia"
+          algorithm: "RS256"
+          use: "sig"
+          key: |
+            {{- fileContent "/secrets/authelia-cert-private-key/tls.key" | nindent 12 }}
+          # cert-manager certificate: https://is.gd/vLCkz7
+          certificate_chain: |
+            {{- fileContent "/secrets/authelia-cert-private-key/tls.crt" | nindent 12 }}
+            {{- fileContent "/secrets/authelia-cert-private-key/ca.crt" | nindent 12 }}
+
+      # config ref: https://is.gd/nq0PHf
+      enable_client_debug_messages: false
+      cors:
+        endpoints:
+          - "authorization"
+          - "token"
+          - "revocation"
+          - "introspection"
+
+        # https://is.gd/F3YNB8
+        allowed_origins:
+          - "*" # FOR NOW
+
+        allowed_origins_from_client_redirect_uris: false
+
+      # https://is.gd/FhAB1j
+      # copied from the terratgrunt example ...
+      clients:
+        - # dex ref @ authelia: https://is.gd/N8wzZP
+          # dex oidc connector: ref: https://is.gd/gZdGS6
+          #
+          # unfortunately, not mounted, because we cannot create a pbkdf2 hash on-the-fly.
+          # so ... for now.
+          #
+          # creating a pbkdf2 hash (from https://is.gd/YocRzt):
+          #   - docker run --rm -ti authelia/authelia sh -c "authelia crypto hash generate pbkdf2"
+          #
+          client_name: Dex
+          client_id: dex-authelia-ldap
+          # 8dciss8x4zk8kk42rt9p3bu2wjrow44u3zcq4tgcy2245ksig1j4wsxe016pl0ba
+          client_secret: "$pbkdf2-sha512$310000$tT2EPQcrkyr/clVp6cG/tQ$6rfogYURO7Nkz9nMa3YTRhw8KXtQnawDOb1sKRU2N9vSUBP/35VvESyRDWleYXq.UG7sIBpMox6CKlaX3Dwcng"
+          redirect_uris:
+            - https://dex.localhost.traefik.me/callback
+          scopes:
+            - openid
+            - email
+            - profile
+          response_types:
+            - code
+          grant_types:
+            - authorization_code
+            - refresh_token
+          access_token_signed_response_alg: "none"
+          userinfo_signed_response_alg: "none"
+          token_endpoint_auth_method: "client_secret_post"
+          response_modes:
+            - form_post
+            - query
+            - fragment
+
+  notifier:
+    filesystem:
+      enabled: true
+      filename: /authelia-notifications/notification.txt
+
+  password_policy:
+    zxcvbn:
+      enabled: true
+      min_score: 3
+
+  session:
+    cookies:
+      - domain: localhost.traefik.me
+        subdomain: auth-ldap
+
+  storage:
+    postgres:
+      enabled: true
+      deploy: true
+      address: "tcp://authelia-ldap-postgresql.authelia-ldap.svc.cluster.local:5432"
+      database: "authelia-ldap"
+      schema: "public"
+      username: "authelia-ldap"
+      password:
+        secret_name: ~
+        value: "authelia-ldap"
+        path: "storage.postgres.password.txt"
+
+postgresql:
+  # default values, but here to see how we configure this.
+  auth:
+    postgresPassword: authelia-ldap
+    username: authelia-ldap
+    password: authelia-ldap
+    database: authelia-ldap
+
+secret:
+  additionalSecrets:
+    authelia-ldap-hmac-value:
+      path: ""
+      items:
+        - key: hmac
+    authelia-ldap-cert-private-key:
+      path: ""
+      items:
+        # https://is.gd/vLCkz7
+        - key: ca.crt
+        - key: tls.crt
+        - key: tls.key

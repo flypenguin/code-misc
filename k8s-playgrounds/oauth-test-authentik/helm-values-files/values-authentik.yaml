@@ -1,0 +1,116 @@
+---
+global:
+  security:
+    allowInsecureImages: true
+  addPrometheusAnnotations: false
+  hostAliases: []
+
+authentik:
+  # -- whether to create the authentik configuration secret
+  enabled: true
+
+  # UNDOCUMENTED IN VALUES.YAML, see here: https://is.gd/UX6v0o
+  bootstrap_password: hey-let-me-in
+
+  log_level: info
+  # don't change this after the first install
+  secret_key: "supasecret"
+  web:
+    path: /
+  email: # fully optional
+    host: ""
+    port: 587
+    username: ""
+    password: ""
+    use_tls: false
+    use_ssl: false
+    timeout: 30
+    from: ""
+  error_reporting:
+    enabled: false
+    environment: "k8s"
+    send_pii: false
+  postgresql:
+    host: "{{ .Release.Name }}-postgresql"
+    name: "authentik"
+    user: "authentik"
+    password: "authentik"
+    port: 5432
+  redis:
+    host: "{{ .Release.Name }}-redis-master"
+    #password: "redis"
+
+server:
+  enabled: true
+  name: server
+  replicas: 1
+  autoscaling:
+    enabled: false
+  pdb:
+    enabled: false
+  containerPorts:
+    http: 9000
+    https: 9443
+    metrics: 9300
+  ingress:
+    enabled: true
+    hosts:
+      - authentik.localhost.traefik.me
+    paths:
+      - "{{ .Values.authentik.web.path }}"
+    pathType: Prefix
+    extraPaths:
+      []
+      # - path: /*
+      #   pathType: Prefix
+      #   backend:
+      #     service:
+      #       name: ssl-redirect
+      #       port:
+      #         name: use-annotation
+    tls:
+      []
+      # - secretName: authentik-tls
+      #   hosts:
+      #     - authentik.domain.tld
+    https: false
+
+  route: # -- enable BETA HTTPRoute resource
+    main:
+      enabled: false
+
+worker:
+  enabled: true
+  name: worker
+  replicas: 1
+  autoscaling:
+    enabled: false
+  pdb:
+    enabled: false
+    pullPolicy: "" # defaults to global.image.pullPolicy
+  containerPorts:
+    http: 9000
+    metrics: 9300
+
+serviceAccount:
+  create: true
+  fullnameOverride: authentik
+
+geoip:
+  enabled: false
+
+prometheus:
+  rules:
+    enabled: false
+
+postgresql:
+  enabled: true
+  auth:
+    username: authentik
+    database: authentik
+    password: authentik
+
+redis:
+  enabled: true
+  auth:
+    enabled: false

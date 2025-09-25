@@ -38,20 +38,19 @@ gatewayClass:
 ingressRoute:
   dashboard:
     enabled: true
-    matchRule: PathPrefix(`/dashboard`) || PathPrefix(`/api`)
+    matchRule: Host(`traefik.localhost.traefik.me`)
     services:
       - name: api@internal
         kind: TraefikService
-    entryPoints: ["traefik"]
-    middlewares: []
+    entryPoints: ["web"]
     tls: {}
   healthcheck:
     enabled: true
-    matchRule: PathPrefix(`/ping`)
+    matchRule: Host(`traefik.localhost.traefik.me`) && PathPrefix(`/ping`)
     services:
       - name: ping@internal
         kind: TraefikService
-    entryPoints: ["traefik"]
+    entryPoints: ["websecure"]
     middlewares: []
     tls: {}
 
@@ -97,22 +96,30 @@ ports:
   web:
     port: 8080
     hostPort: 8080 # IMPORTANT
-    asDefault: true
+    asDefault: false
+    protocol: TCP
+    # this does not work, because it uses :8443 in the redirected url.
+    # let's _rewrite_ this instead.
+    redirections:
+      entryPoint:
+        to: websecure
+        scheme: https
+        permanent: true
+        port: 443 # https://is.gd/vXqGqm
     # containerPort: 8080 # no effect?
     # targetPort: 8080 # no effect?
     # nodePort: 8080 # not the correct port range ...
-    expose:
-      default: true
-    exposedPort: 8080
-    protocol: TCP
-    forwardedHeaders:
-      # -- Trust forwarded headers information (X-Forwarded-*).
-      trustedIPs: []
-      insecure: false
-    proxyProtocol:
-      # -- Enable the Proxy Protocol header parsing for the entry point
-      trustedIPs: []
-      insecure: false
+    #expose:
+    #  default: true
+    #exposedPort: 8080
+    #forwardedHeaders:
+    #  # -- Trust forwarded headers information (X-Forwarded-*).
+    #  trustedIPs: []
+    #  insecure: false
+    #proxyProtocol:
+    #  # -- Enable the Proxy Protocol header parsing for the entry point
+    #  trustedIPs: []
+    #  insecure: false
   websecure:
     asDefault: true
     port: 8443

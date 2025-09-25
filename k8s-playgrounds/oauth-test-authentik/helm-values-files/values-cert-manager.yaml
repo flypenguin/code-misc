@@ -1,3 +1,4 @@
+---
 crds:
   # non-default, see https://is.gd/yLE0Dy
   enabled: true
@@ -8,6 +9,12 @@ crds:
 enableCertificateOwnerRef: true
 # set "advanced" configs - see here: https://is.gd/socRJF
 #config: {...}
+
+# auto-handle all ingress certificates.
+ingressShim:
+  defaultIssuerName: internal-ca
+  defaultIssuerKind: ClusterIssuer
+  defaultIssuerGroup: cert-manager.io
 
 prometheus:
   enabled: false

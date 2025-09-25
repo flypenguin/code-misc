@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__kubernetes__resources_list",
+      "mcp__context7__resolve-library-id",
+      "mcp__kubernetes__resources_get",
+      "mcp__context7__get-library-docs",
+      "Bash(curl:*)",
+      "Bash(make:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

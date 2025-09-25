@@ -2,20 +2,20 @@
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: playground-ca
+  name: internal-ca
   namespace: cert-manager
-  labels:
-    flypenguin.de/name: tls-cert-ingress-test
 spec:
-  secretName: tls-me-traefik-localhost
+  secretName: internal-ca-cert
 
   privateKey:
     algorithm: RSA
     encoding: PKCS1
     size: 2048
 
+  isCA: true
   usages:
     - server auth
+    - client auth
 
   emailAddresses:
     - penguin@flypenguin.eu
@@ -23,10 +23,8 @@ spec:
     organizations:
       - OAuth Test Playground
 
-  dnsNames:
-    - localhost.traefik.me
-    - "*.localhost.traefik.me"
+  commonName: internal-ca
 
   issuerRef:
-    name: playground-ca
+    name: selfsigned
     kind: ClusterIssuer

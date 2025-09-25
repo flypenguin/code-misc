@@ -22,7 +22,7 @@ SCRIPT_START = cd $(MAKEFILE_DIR) ; set -euo pipefail
 CLUSTER_HIGH_PORT_HTTPS = 8443
 CLUSTER_HIGH_PORT_HTTP = 8080
 CLUSTER_URL = localhost.traefik.me
-CLUSTER_CREATE_NAMESPACES = authelia
+CLUSTER_CREATE_NAMESPACES = authelia-local authelia-ldap
 
 
 helm-values-files/deploy-%.txt: helm-values-files/values-%.yaml
@@ -47,6 +47,7 @@ helm-values-files/deploy-%.txt: helm-values-files/values-%.yaml
 	  set -x ; \
 	  helm upgrade -i --create-namespace -n $$ns -f $< $* $$chart > $@.tmp 2>&1 \
 	) && mv $@.tmp $@ || cat $@.tmp
+
 
 k8s-objects/apply-%.txt: k8s-objects/k8s-%.yaml
 	@$(SCRIPT_START) ; \
@@ -90,8 +91,8 @@ $(AUTHELIA_USERS_K8S_SECRET): $(AUTHELIA_USERS_HASHES_YAML)
 clean:
 	@rm -fv helm-values-files/deploy-*.txt
 	@rm -fv k8s-objects/apply-*.txt
-	@rm -fv $(AUTHELIA_USERS_K8S_SECRET)
-	@rm -fv $(AUTHELIA_USERS_HASHES_YAML)
+	@#rm -fv $(AUTHELIA_USERS_K8S_SECRET)
+	@#rm -fv $(AUTHELIA_USERS_HASHES_YAML)
 .PHONY: clean
 
 
@@ -131,22 +132,65 @@ ingress-test:
 .PHONY: ingress-test
 
 
-prepare-cluster:
-	@if ! kind get clusters | grep -q $(KIND_CLUSTER_NAME) ; then \
-	  echo " * Creating cluster '$(KIND_CLUSTER_NAME)' using 'kind' ..." ; \
-	  set -x ; \
-	  kind create cluster -n test-oauth ; \
+_select_engine:
+	@cd "$$(git rev-parse --show-toplevel)" ; \
+	set -euo pipefail ; \
+	[[ -f .cluster_type ]] && source .cluster_type ; \
+	if [[ -z "$${CLUSTER_TYPE:-}" ]] ; then \
+	  CLUSTER_TYPE=$$(echo -e "podman\ndocker\n" | fzf --height=~100%) ; \
+	  echo "CLUSTER_TYPE=$$CLUSTER_TYPE" > .cluster_type ; \
 	fi
-.PHONY: prepare-cluster
+.PHONY: _select_engine
+
+
+delete-cluster: _select_engine
+	@cd "$$(git rev-parse --show-toplevel)" ; \
+	set -euo pipefail ; source .cluster_type ; \
+	if [[ "$$CLUSTER_TYPE" == "podman" ]] ; then \
+	  export KIND_EXPERIMENTAL_PROVIDER=podman ; \
+	fi ; \
+	if kind get clusters | grep -q $(KIND_CLUSTER_NAME) ; then \
+	  echo " * Deleting kind cluster '$(KIND_CLUSTER_NAME)' ..." ; \
+	  set -x ; \
+	  kind delete cluster -n $(KIND_CLUSTER_NAME) ; \
+	else \
+	  echo "Nothing to delete ... ?" ; \
+	fi
+.PHONY: delete-cluster
+
+
+create-cluster: _select_engine
+	@cd "$$(git rev-parse --show-toplevel)" ; \
+	set -euo pipefail ; source .cluster_type ; \
+	if [[ "$$CLUSTER_TYPE" == "podman" ]] ; then \
+	  export KIND_EXPERIMENTAL_PROVIDER=podman ; \
+	fi ; \
+	if ! kind get clusters | grep -q $(KIND_CLUSTER_NAME) ; then \
+	  echo " * Creating kind cluster '$(KIND_CLUSTER_NAME)' ..." ; \
+	  kind create cluster --config ./config-files/kind-cluster.yaml -n $(KIND_CLUSTER_NAME) ; \
+	fi
+.PHONY: create-cluster
+
+
+kubeconfig: _select_engine
+	@cd "$$(git rev-parse --show-toplevel)" ; \
+	set -euo pipefail ; source .cluster_type ; \
+	if [[ "$$CLUSTER_TYPE" == "podman" ]] ; then \
+	  export KIND_EXPERIMENTAL_PROVIDER=podman ; \
+	fi ; \
+	kind get kubeconfig --name $(KIND_CLUSTER_NAME)
+.PHONY: kubeconfig
 
 
 prepare-helm:
 	helm repo add     authelia          https://charts.authelia.com
+	helm repo add     authentik         https://charts.goauthentik.io
 	helm repo add     cert-manager      https://charts.jetstack.io
 	helm repo add     dex               https://charts.dexidp.io
 	helm repo add     external-secrets  https://charts.external-secrets.io
 	helm repo add     oauth2-proxy      https://oauth2-proxy.github.io/manifests/
 	helm repo add     traefik           https://traefik.github.io/charts
+	helm repo add     zitadel           https://charts.zitadel.com
 	helm repo update
 .PHONY: prepare-helm
 

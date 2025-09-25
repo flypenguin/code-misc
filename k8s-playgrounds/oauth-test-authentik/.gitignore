@@ -4,3 +4,5 @@ apply-*.txt
 helm-default-values/
 *.key
 node_modules
+
+.envrc
