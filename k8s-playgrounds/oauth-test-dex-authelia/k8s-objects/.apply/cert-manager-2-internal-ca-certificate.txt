@@ -1,1 +1,0 @@
-certificate.cert-manager.io/internal-ca unchanged

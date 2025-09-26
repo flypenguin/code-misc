@@ -3,22 +3,22 @@ rbac:
   enabled: true
 
 ingress:
-  gatewayAPI:
-    enabled: false
-  traefikCRD:
-    enabled: false
-    disableIngressRoute: false
-    middlewares:
-      auth:
-        nameOverride: ""
-        endpointOverride: ""
-        authResponseHeaders:
-          - "Remote-User"
-          - "Remote-Name"
-          - "Remote-Email"
-          - "Remote-Groups"
+  enabled: true
+  # cert-manager doing its magic, using an internal self-signed ca.
 
 pod:
+  #command: [sleep, "10000"]
+  extraVolumes:
+    - name: users-database
+      secret:
+        secretName: authelia-ldap-users-database
+        optional: false
+    - name: pre-processed-config-values
+      emptyDir: {}
+    - # to read the "email" notifications
+      name: authelia-ldap-notifications
+      emptyDir: {}
+
   env:
     - # https://is.gd/v9hRop
       # enabled templating ...
@@ -32,14 +32,30 @@ pod:
           name: authelia-ldap-hmac-value
           key: hmac
 
-  extraVolumes:
-    - # to read the "email" notifications
-      name: authelia-ldap-notifications
-      emptyDir: {}
-
   extraVolumeMounts:
     - name: authelia-ldap-notifications
       mountPath: /authelia-notifications
+    - name: pre-processed-config-values
+      mountPath: /ppc
+
+  initContainers:
+    - name: pbkdf2-hasher
+      image: ghcr.io/authelia/authelia
+      command: [
+          sh,
+          -c,
+          # 'set -x ; CS=/ppc/client-secrets ; mkdir $CS ; cd $CS ; authelia crypto hash generate --password "$CLIENT_SECRET" | sed -E "s/^([^ ]+ )?//" > x ; cat x ; mv x dex-authelia-ldap',
+          'CS=/ppc/client-secrets ; mkdir $CS ; cd $CS ; authelia crypto hash generate --password "$CLIENT_SECRET" | sed -E "s/^([^ ]+ )?//" > dex-authelia-ldap',
+        ]
+      env:
+        - name: CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: authelia-ldap-hmac-value
+              key: hmac
+      volumeMounts:
+        - name: pre-processed-config-values
+          mountPath: /ppc
 
   extraContainers:
     - # to read the "email" notifications
@@ -56,68 +72,50 @@ pod:
           mountPath: /authelia-notifications
 
 configMap:
+  access_control:
+    default_policy: two_factor
+
   authentication_backend:
+    refresh_interval: always
+
     ldap:
-      address: "ldap://127.0.0.1"
-      implementation: "custom"
-      timeout: "5s"
+      enabled: true
+      implementation: "activedirectory"
+      address: '{{ secret "/secrets/authelia-ldap-server-config/address" }}' # yes this works.
+      timeout: "5 seconds"
       start_tls: false
       tls:
-        server_name: "ldap.localhost.traefik.me"
         skip_verify: true
-        minimum_version: "TLS1.2"
-        maximum_version: "TLS1.3"
-      pooling:
-        enable: false
-        count: 5
-        retries: 2
-        timeout: "10 seconds"
-      base_dn: "DC=localhost,DC=traefik.me"
-      additional_users_dn: "OU=users"
-      users_filter: "(&({username_attribute}={input})(objectClass=person))"
-      additional_groups_dn: "OU=groups"
-      groups_filter: "(&(member={dn})(objectClass=groupOfNames))"
-      #group_search_mode: "filter"
+      base_dn: '{{ secret "/secrets/authelia-ldap-server-config/base_dn" }}' # yes this works.
+      additional_users_dn: ""
+      users_filter: ""
+      additional_groups_dn: ""
+      groups_filter: ""
       permit_referrals: false
       permit_unauthenticated_bind: false
       permit_feature_detection_failure: false
-      user: "CN=admin,DC=localhost,DC=traefik.me"
-      # again OBSOLETE docs, refer to this: https://is.gd/iXWSLJ
+      user: '{{ secret "/secrets/authelia-ldap-server-config/user" }}' # yes this works.
+      ###  AS OF 2025-09-26, ALL OF THIS DOES __NOT__ WORK:
+      #
+      ## (1)
+      # password:
+      #   disabled: true
+      #   secret_name: authelia-ldap-server-config
+      #   path: password
+      #
+      ## (2)
+      # password:
+      #   value: '{{ secret "/secrets/authelia-ldap-server-config/password" }}'
+      #
+      ## The ONLY thing working seems to be:
       password:
-        disabled: false
-        secret_name: ~
-        value: ""
-        path: "authentication.ldap.password.txt"
+        value: "MY VALUE"
+      ### END
       attributes:
-        distinguished_name: "distinguishedName"
-        username: "uid"
+        username: "userPrincipalName"
         display_name: "displayName"
-        family_name: "sn"
-        given_name: "givenName"
-        middle_name: "middleName"
-        nickname: ""
-        gender: ""
-        birthdate: ""
-        website: "wWWHomePage"
-        profile: ""
-        picture: ""
-        zoneinfo: ""
-        locale: ""
-        phone_number: "telephoneNumber"
-        phone_extension: ""
-        street_address: "streetAddress"
-        locality: "l"
-        region: "st"
-        postal_code: "postalCode"
-        country: "c"
-        mail: "mail"
+        mail: "userPrincipalName"
         member_of: "memberOf"
-        group_name: "cn"
-        extra:
-          extra_example:
-            name: ""
-            multi_valued: false
-            value_type: "string"
 
   identity_providers:
     # for all the secret mounting and usage see this:
@@ -138,20 +136,14 @@ configMap:
           algorithm: "RS256"
           use: "sig"
           key:
-            path: /secrets/authelia-cert-private-key/tls.key
+            path: /secrets/authelia-ldap-cert-private-key/tls.key
           # cert-manager certificate: https://is.gd/vLCkz7
           certificate_chain:
-            path: /secrets/authelia-cert-private-key/ca.crt
+            path: /secrets/authelia-ldap-cert-private-key/tls.crt
 
       # config ref: https://is.gd/nq0PHf
       enable_client_debug_messages: false
       cors:
-        endpoints:
-          - "authorization"
-          - "token"
-          - "revocation"
-          - "introspection"
-
         # https://is.gd/F3YNB8
         allowed_origins:
           - "*" # FOR NOW
@@ -163,17 +155,11 @@ configMap:
       clients:
         - # dex ref @ authelia: https://is.gd/N8wzZP
           # dex oidc connector: ref: https://is.gd/gZdGS6
-          #
-          # unfortunately, not mounted, because we cannot create a pbkdf2 hash on-the-fly.
-          # so ... for now.
-          #
-          # creating a pbkdf2 hash (from https://is.gd/YocRzt):
-          #   - docker run --rm -ti authelia/authelia sh -c "authelia crypto hash generate pbkdf2"
-          #
+          # we create the pbkdf2 hash from the init container - see above.
           client_name: Dex
           client_id: dex-authelia-ldap
-          # 8dciss8x4zk8kk42rt9p3bu2wjrow44u3zcq4tgcy2245ksig1j4wsxe016pl0ba
-          client_secret: "$pbkdf2-sha512$310000$tT2EPQcrkyr/clVp6cG/tQ$6rfogYURO7Nkz9nMa3YTRhw8KXtQnawDOb1sKRU2N9vSUBP/35VvESyRDWleYXq.UG7sIBpMox6CKlaX3Dwcng"
+          client_secret:
+            path: /ppc/client-secrets/dex-authelia-ldap
           redirect_uris:
             - https://dex.localhost.traefik.me/callback
           scopes:
@@ -184,7 +170,7 @@ configMap:
             - code
           grant_types:
             - authorization_code
-            - refresh_token
+            # - refresh_token # Authelia warning: "refresh_token" _WITH_ "offline_access", or none.
           access_token_signed_response_alg: "none"
           userinfo_signed_response_alg: "none"
           token_endpoint_auth_method: "client_secret_post"
@@ -231,6 +217,13 @@ postgresql:
 
 secret:
   additionalSecrets:
+    authelia-ldap-server-config:
+      path: ""
+      items:
+        - key: address
+        - key: base_dn
+        - key: user
+        - key: password
     authelia-ldap-hmac-value:
       path: ""
       items:

@@ -1,8 +1,0 @@
-*users.csv
-deploy-*.txt
-apply-*.txt
-helm-default-values/
-*.key
-node_modules
-
-.envrc

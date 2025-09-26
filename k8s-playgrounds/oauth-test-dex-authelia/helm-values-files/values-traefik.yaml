@@ -87,17 +87,18 @@ metrics:
 
 ports:
   traefik:
-    port: 8090
-    hostPort: 8090
+    port: 9081
+    hostPort: 9081
     expose:
       default: false
-    exposedPort: 8090
+    exposedPort: 9081
     protocol: TCP
   web:
-    port: 8080
-    hostPort: 8080 # IMPORTANT
+    port: 9080
+    hostPort: 9080 # IMPORTANT
     asDefault: false
     protocol: TCP
+    exposedPort: 80
     # this does not work, because it uses :8443 in the redirected url.
     # let's _rewrite_ this instead.
     redirections:
@@ -122,15 +123,16 @@ ports:
     #  insecure: false
   websecure:
     asDefault: true
-    port: 8443
-    hostPort: 8443 # IMPORTANT
+    port: 9443
+    hostPort: 9443 # IMPORTANT
+    exposedPort: 443
     # containerPort:
     # targetPort:
     # nodePort:
     # allowACMEByPass: false
     expose:
       default: true
-    exposedPort: 8443
+    exposedPort: 9443
     protocol: TCP
     forwardedHeaders:
       trustedIPs: []

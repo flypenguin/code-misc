@@ -4,9 +4,9 @@ name: test-oauth
 nodes:
   - role: control-plane
     extraPortMappings:
-      - containerPort: 8080
-        hostPort: 8080
+      - containerPort: 9080
+        hostPort: 9080
         protocol: TCP
-      - containerPort: 8443
-        hostPort: 8443
+      - containerPort: 9443
+        hostPort: 9443
         protocol: TCP

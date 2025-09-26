@@ -1,1 +1,0 @@
-ingress.networking.k8s.io/authelia-local-notifications unchanged

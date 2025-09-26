@@ -1,8 +1,9 @@
 *users.csv
-deploy-*.txt
-apply-*.txt
+.deploy/
+.apply/
 helm-default-values/
 *.key
 node_modules
-
 .envrc
+*.ignore.*
+*.ignore.*

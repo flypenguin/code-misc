@@ -4,25 +4,7 @@ rbac:
 
 ingress:
   enabled: true
-  # annotations: { cert-manager.io/cluster-issuer: playground-ca }
-  #certManager: true
-  #tls:
-  #  enabled: true
-  #  secret: "tls-me-traefik-localhost-auth"
-  gatewayAPI:
-    enabled: false
-  traefikCRD:
-    enabled: false
-    disableIngressRoute: false
-    middlewares:
-      auth:
-        nameOverride: ""
-        endpointOverride: ""
-        authResponseHeaders:
-          - "Remote-User"
-          - "Remote-Name"
-          - "Remote-Email"
-          - "Remote-Groups"
+  # cert-manager doing its magic, using an internal self-signed ca.
 
 pod:
   extraVolumes:
@@ -30,6 +12,8 @@ pod:
       secret:
         secretName: authelia-local-users-database
         optional: false
+    - name: pre-processed-config-values
+      emptyDir: {}
     - # to read the "email" notifications
       name: authelia-local-notifications
       emptyDir: {}
@@ -54,6 +38,27 @@ pod:
       subPath: users_database.yml
     - name: authelia-local-notifications
       mountPath: /authelia-notifications
+    - name: pre-processed-config-values
+      mountPath: /ppc
+
+  initContainers:
+    - name: pbkdf2-hasher
+      image: ghcr.io/authelia/authelia
+      command: [
+          sh,
+          -c,
+          # 'set -x ; CS=/ppc/client-secrets ; mkdir $CS ; cd $CS ; authelia crypto hash generate --password "$CLIENT_SECRET" | sed -E "s/^([^ ]+ )?//" > x ; cat x ; mv x dex-authelia-local',
+          'CS=/ppc/client-secrets ; mkdir $CS ; cd $CS ; authelia crypto hash generate --password "$CLIENT_SECRET" | sed -E "s/^([^ ]+ )?//" > dex-authelia-local',
+        ]
+      env:
+        - name: CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: authelia-local-hmac-value
+              key: hmac
+      volumeMounts:
+        - name: pre-processed-config-values
+          mountPath: /ppc
 
   extraContainers:
     - # to read the "email" notifications
@@ -93,7 +98,7 @@ configMap:
     #   - https://is.gd/ZAxz96 (how to use secrets)
     # secrets mounted below under "secret.additionalSecrets.[...]"
     oidc:
-      enabled: false
+      enabled: true
       # NO LONGER A STRING. see here: https://is.gd/zNwgrE
       # we mount that secret below. the config says "use value from '/secrets/authelia-local-hmac-value/hmac'"
       hmac_secret:
@@ -105,10 +110,10 @@ configMap:
           algorithm: "RS256"
           use: "sig"
           key:
-            path: /secrets/authelia-cert-private-key/tls.key
+            path: /secrets/authelia-local-cert-private-key/tls.key
           # cert-manager certificate: https://is.gd/vLCkz7
           certificate_chain:
-            path: /secrets/authelia-cert-private-key/ca.crt
+            path: /secrets/authelia-local-cert-private-key/tls.crt
 
       # config ref: https://is.gd/nq0PHf
       enable_client_debug_messages: false
@@ -124,17 +129,11 @@ configMap:
       clients:
         - # dex ref @ authelia: https://is.gd/N8wzZP
           # dex oidc connector: ref: https://is.gd/gZdGS6
-          #
-          # unfortunately, not mounted, because we cannot create a pbkdf2 hash on-the-fly.
-          # so ... for now.
-          #
-          # creating a pbkdf2 hash (from https://is.gd/YocRzt):
-          #   - docker run --rm -ti authelia/authelia sh -c "authelia crypto hash generate pbkdf2"
-          #
+          # we create the pbkdf2 hash from the init container - see above.
           client_name: Dex
           client_id: dex-authelia-local
-          # jmkh4i7z3dh1blkqpuufkch3dtwveyjb
-          client_secret: "$pbkdf2-sha512$310000$ws8vvPpgZzl0wLbQ0/VWiQ$r1Ra2ctSUhfcSjw8BgxgA3Z3uWOe6bI9HkX3hLbQtmQrsjIQA6uQfj3FiKEplnFQXNldUSBN18nkLD1FYC20Qg"
+          client_secret:
+            path: /ppc/client-secrets/dex-authelia-local
           redirect_uris:
             - https://dex.localhost.traefik.me/callback
           scopes:
@@ -145,7 +144,7 @@ configMap:
             - code
           grant_types:
             - authorization_code
-            - refresh_token
+            # - refresh_token # Authelia warning: "refresh_token" _WITH_ "offline_access", or none.
           access_token_signed_response_alg: "none"
           userinfo_signed_response_alg: "none"
           token_endpoint_auth_method: "client_secret_post"

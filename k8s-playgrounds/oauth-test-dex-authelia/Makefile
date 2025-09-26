@@ -48,7 +48,7 @@ helm-values-files/.deploy/%.txt: helm-values-files/values-%.yaml
 	(\
 	  set -x ; \
 	  helm upgrade -i --create-namespace -n $$ns -f $< $* $$chart > $@.tmp 2>&1 \
-	) && mv $@.tmp $@ || cat $@.tmp
+	) && mv $@.tmp $@ || (cat $@.tmp && false)
 
 
 k8s-objects/.apply/%.txt: k8s-objects/k8s-%.yaml
@@ -59,7 +59,7 @@ k8s-objects/.apply/%.txt: k8s-objects/k8s-%.yaml
 	(\
 	  set -x ; \
 	  kubectl apply -f $< > $@.tmp 2>&1 \
-	) && mv $@.tmp $@ || (cat $@.tmp && rm $@.tmp)
+	) && mv $@.tmp $@ || (cat $@.tmp && rm $@.tmp && false)
 
 
 $(AUTHELIA_USERS_CSV):
@@ -82,13 +82,13 @@ $(AUTHELIA_USERS_K8S_SECRET): $(AUTHELIA_USERS_HASHES_YAML)
 	$(KCMD) create secret \
 	  generic \
 	  -n authelia-local \
-	  authelia-users-database \
+	  authelia-local-users-database \
 	  --from-file=users_database.yml=$(AUTHELIA_USERS_HASHES_YAML) \
 	  --dry-run=client \
 	  -o yaml \
 	> $@ \
 	&& echo "Created file: $@" \
-	|| rm -f $@
+	|| (rm -f $@ ; false)
 
 
 clean-users:
@@ -223,7 +223,7 @@ deploy-namespaces:
 .PHONY: deploy-namespaces
 
 
-DEPLOY_SLEEP ?= 10
+DEPLOY_SLEEP ?= 15
 DEPLOY_TRIES ?= 3
 
 deploy: deploy-namespaces
@@ -232,7 +232,15 @@ deploy: deploy-namespaces
 	  REPEAT=0 ; \
 	  make -s deploy-helm || REPEAT=1 ; \
 	  make -s deploy-k8s  || REPEAT=1 ; \
-	  (( REPEAT == 0 )) && break || true ; \
+	  if (( REPEAT == 0 )) ; then \
+	    break ; \
+	  elif (( REPEAT < $(DEPLOY_TRIES) )) ; then \
+	    echo -e "\n\nDeployment run $$i (of max $(DEPLOY_TRIES)) completed with errors, trying again in $(DEPLOY_SLEEP) seconds ..." ; \
+	    sleep $(DEPLOY_SLEEP) ; \
+	    echo -e "\nRetry.\n" ; \
+	  else \
+	    echo -e "\nMax retries reached, aborting. Deployment has errors.\n" ; \
+	  fi ; \
 	done ;
 deploy: $(AUTHELIA_USERS_K8S_SECRET)
 .PHONY: deploy
