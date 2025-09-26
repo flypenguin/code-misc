@@ -23,13 +23,6 @@ pod:
       # enabled templating ...
       name: X_AUTHELIA_CONFIG_FILTERS
       value: "template"
-    - # https://is.gd/yHegFy -- authelia go templating reference
-      # adds an ENV var from a secret. see "configMap.identityProviders.hmac" below.
-      name: HMAC_VALUE
-      valueFrom:
-        secretKeyRef:
-          name: authelia-local-hmac-value
-          key: hmac
 
   extraVolumeMounts:
     - name: users-database
@@ -44,18 +37,25 @@ pod:
   initContainers:
     - name: pbkdf2-hasher
       image: ghcr.io/authelia/authelia
-      command: [
-          sh,
-          -c,
-          # 'set -x ; CS=/ppc/client-secrets ; mkdir $CS ; cd $CS ; authelia crypto hash generate --password "$CLIENT_SECRET" | sed -E "s/^([^ ]+ )?//" > x ; cat x ; mv x dex-authelia-local',
-          'CS=/ppc/client-secrets ; mkdir $CS ; cd $CS ; authelia crypto hash generate --password "$CLIENT_SECRET" | sed -E "s/^([^ ]+ )?//" > dex-authelia-local',
-        ]
+      command:
+        - sh
+        - -c
+        - |
+          set -euo pipefail
+          CS=/ppc/client-secrets
+          mkdir $CS
+          cd $CS
+          echo "Password SHA256: $(echo "$CLIENT_SECRET" | sha256sum)"
+          authelia crypto hash generate --password "$CLIENT_SECRET" | sed -E "s/^([^ ]+ )?//" > dex-authelia-local
+          authelia crypto hash validate --password "$CLIENT_SECRET" -- "$(cat dex-authelia-local)"
+          echo "Validation successful."
+
       env:
         - name: CLIENT_SECRET
           valueFrom:
             secretKeyRef:
-              name: authelia-local-hmac-value
-              key: hmac
+              name: authelia-local-client-secret-dex
+              key: client_secret
       volumeMounts:
         - name: pre-processed-config-values
           mountPath: /ppc
@@ -191,6 +191,10 @@ postgresql:
 
 secret:
   additionalSecrets:
+    authelia-local-client-secret-dex:
+      path: ""
+      items:
+        - key: client_secret
     authelia-local-hmac-value:
       path: ""
       items:
