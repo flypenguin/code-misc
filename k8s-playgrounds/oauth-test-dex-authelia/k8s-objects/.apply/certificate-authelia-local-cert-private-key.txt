@@ -1,0 +1,1 @@
+certificate.cert-manager.io/authelia-local-cert-private-key unchanged

@@ -1,11 +1,12 @@
 CHART "name" "repo/chart"
-CHART authelia-local authelia/authelia
+CHART authelia-dex dex/dex
 CHART authelia-ldap authelia/authelia
-CHART cert-manager cert-manager/cert-manager
-CHART traefik traefik/traefik
+CHART authelia-local authelia/authelia
 CHART authentik authentik/authentik
 CHART authentik-dex dex/dex
-CHART authelia-dex dex/dex
-CHART zitadel-dex dex/dex
+CHART cert-manager cert-manager/cert-manager
+CHART dex dex/dex
 CHART external-secrets external-secrets/external-secrets
+CHART traefik traefik/traefik
+CHART zitadel-dex dex/dex
 NS "name" "namespace-name"

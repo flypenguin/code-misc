@@ -1,0 +1,9 @@
+Release "traefik" has been upgraded. Happy Helming!
+NAME: traefik
+LAST DEPLOYED: Fri Sep 26 11:15:27 2025
+NAMESPACE: traefik
+STATUS: deployed
+REVISION: 2
+TEST SUITE: None
+NOTES:
+traefik with docker.io/traefik:v3.5.2 has been deployed successfully on traefik namespace !

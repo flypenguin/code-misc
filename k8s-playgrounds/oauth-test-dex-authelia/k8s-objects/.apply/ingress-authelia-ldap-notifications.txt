@@ -1,0 +1,1 @@
+ingress.networking.k8s.io/authelia-ldap-notifications unchanged

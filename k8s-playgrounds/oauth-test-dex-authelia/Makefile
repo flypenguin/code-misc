@@ -3,7 +3,8 @@ SHELL = bash
 THIS_MAKEFILE := $(lastword $(MAKEFILE_LIST))
 MAKEFILE_DIR := $(dir $(THIS_MAKEFILE))
 
-KIND_CLUSTER_NAME := test-oauth
+KIND_CLUSTER_NAME := test-dex-authelia
+
 KCMD = kubectl --context kind-$(KIND_CLUSTER_NAME)
 HCMD = helm --kube-context kind-$(KIND_CLUSTER_NAME)
 
@@ -14,8 +15,8 @@ AUTHELIA_USERS_K8S_SECRET = k8s-objects/k8s-authelia-users-secret.yaml
 
 HELM_VALUES := $(wildcard helm-values-files/values-*.yaml)
 KYML_VALUES := $(wildcard k8s-objects/k8s-*.yaml)
-HELM_DEPLOY := $(HELM_VALUES:helm-values-files/values-%.yaml=helm-values-files/deploy-%.txt)
-KYML_DEPLOY := $(KYML_VALUES:k8s-objects/k8s-%.yaml=k8s-objects/apply-%.txt)
+HELM_DEPLOY := $(HELM_VALUES:helm-values-files/values-%.yaml=helm-values-files/.deploy/%.txt)
+KYML_DEPLOY := $(KYML_VALUES:k8s-objects/k8s-%.yaml=k8s-objects/.apply/%.txt)
 
 SCRIPT_START = cd $(MAKEFILE_DIR) ; set -euo pipefail
 
@@ -25,8 +26,9 @@ CLUSTER_URL = localhost.traefik.me
 CLUSTER_CREATE_NAMESPACES = authelia-local authelia-ldap
 
 
-helm-values-files/deploy-%.txt: helm-values-files/values-%.yaml
+helm-values-files/.deploy/%.txt: helm-values-files/values-%.yaml
 	@$(SCRIPT_START) ; \
+	mkdir -p helm-values-files/.deploy ; \
 	rm -f "$@" "$@.tmp"; \
 	name=$*; \
 	chart="$$(\
@@ -49,8 +51,9 @@ helm-values-files/deploy-%.txt: helm-values-files/values-%.yaml
 	) && mv $@.tmp $@ || cat $@.tmp
 
 
-k8s-objects/apply-%.txt: k8s-objects/k8s-%.yaml
+k8s-objects/.apply/%.txt: k8s-objects/k8s-%.yaml
 	@$(SCRIPT_START) ; \
+	mkdir -p k8s-objects/.apply ; \
 	rm -f "$@" "$@.tmp"; \
 	name=$*; \
 	(\
@@ -78,7 +81,7 @@ $(AUTHELIA_USERS_K8S_SECRET): $(AUTHELIA_USERS_HASHES_YAML)
 	@$(SCRIPT_START) ; \
 	$(KCMD) create secret \
 	  generic \
-	  -n authelia \
+	  -n authelia-local \
 	  authelia-users-database \
 	  --from-file=users_database.yml=$(AUTHELIA_USERS_HASHES_YAML) \
 	  --dry-run=client \
@@ -88,16 +91,21 @@ $(AUTHELIA_USERS_K8S_SECRET): $(AUTHELIA_USERS_HASHES_YAML)
 	|| rm -f $@
 
 
+clean-users:
+	@rm -fv $(AUTHELIA_USERS_K8S_SECRET)
+	@rm -fv $(AUTHELIA_USERS_HASHES_YAML)
+.PHONY: clean-users
+
+
 clean:
-	@rm -fv helm-values-files/deploy-*.txt
-	@rm -fv k8s-objects/apply-*.txt
-	@#rm -fv $(AUTHELIA_USERS_K8S_SECRET)
-	@#rm -fv $(AUTHELIA_USERS_HASHES_YAML)
+	@rm -rfv helm-values-files/.deploy
+	@rm -rfv k8s-objects/.apply
 .PHONY: clean
 
 
 deploy-helm: $(HELM_DEPLOY)
 .PHONY: deploy-helm
+
 
 deploy-k8s: $(KYML_DEPLOY)
 .PHONY: deploy-k8s
@@ -133,7 +141,7 @@ ingress-test:
 
 
 _select_engine:
-	@cd "$$(git rev-parse --show-toplevel)" ; \
+	@cd "$(MAKEFILE_DIR)" ; \
 	set -euo pipefail ; \
 	[[ -f .cluster_type ]] && source .cluster_type ; \
 	if [[ -z "$${CLUSTER_TYPE:-}" ]] ; then \
@@ -143,8 +151,8 @@ _select_engine:
 .PHONY: _select_engine
 
 
-delete-cluster: _select_engine
-	@cd "$$(git rev-parse --show-toplevel)" ; \
+delete-cluster: _select_engine clean clean-users
+	@cd "$(MAKEFILE_DIR)" ; \
 	set -euo pipefail ; source .cluster_type ; \
 	if [[ "$$CLUSTER_TYPE" == "podman" ]] ; then \
 	  export KIND_EXPERIMENTAL_PROVIDER=podman ; \
@@ -160,20 +168,22 @@ delete-cluster: _select_engine
 
 
 create-cluster: _select_engine
-	@cd "$$(git rev-parse --show-toplevel)" ; \
+	@cd "$(MAKEFILE_DIR)" ; \
 	set -euo pipefail ; source .cluster_type ; \
 	if [[ "$$CLUSTER_TYPE" == "podman" ]] ; then \
 	  export KIND_EXPERIMENTAL_PROVIDER=podman ; \
 	fi ; \
 	if ! kind get clusters | grep -q $(KIND_CLUSTER_NAME) ; then \
 	  echo " * Creating kind cluster '$(KIND_CLUSTER_NAME)' ..." ; \
+	  make clean ; \
+	  make clean-users ; \
 	  kind create cluster --config ./config-files/kind-cluster.yaml -n $(KIND_CLUSTER_NAME) ; \
 	fi
 .PHONY: create-cluster
 
 
 kubeconfig: _select_engine
-	@cd "$$(git rev-parse --show-toplevel)" ; \
+	@cd "$(MAKEFILE_DIR)" ; \
 	set -euo pipefail ; source .cluster_type ; \
 	if [[ "$$CLUSTER_TYPE" == "podman" ]] ; then \
 	  export KIND_EXPERIMENTAL_PROVIDER=podman ; \
@@ -195,7 +205,11 @@ prepare-helm:
 .PHONY: prepare-helm
 
 
-prepare: prepare-cluster prepare-users prepare-helm
+prepare-users: $(AUTHELIA_USERS_HASHES_YAML)
+.PHONY: prepare-users
+
+
+prepare: create-cluster prepare-users prepare-helm
 .PHONY: prepare
 
 
@@ -209,8 +223,24 @@ deploy-namespaces:
 .PHONY: deploy-namespaces
 
 
+DEPLOY_SLEEP ?= 10
+DEPLOY_TRIES ?= 3
+
 deploy: deploy-namespaces
+	@cd "$(MAKEFILE_DIR)" ; \
+	for i in {1..$(DEPLOY_TRIES)} ; do \
+	  REPEAT=0 ; \
+	  make -s deploy-helm || REPEAT=1 ; \
+	  make -s deploy-k8s  || REPEAT=1 ; \
+	  (( REPEAT == 0 )) && break || true ; \
+	done ;
 deploy: $(AUTHELIA_USERS_K8S_SECRET)
-deploy: deploy-helm
-deploy: deploy-k8s
 .PHONY: deploy
+
+
+reset: delete-cluster prepare deploy
+.PHONY: reset
+
+
+redeploy: clean deploy
+.PHONY: redeploy

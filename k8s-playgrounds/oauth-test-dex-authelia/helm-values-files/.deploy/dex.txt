@@ -1,0 +1,10 @@
+Release "dex" does not exist. Installing it now.
+NAME: dex
+LAST DEPLOYED: Fri Sep 26 11:21:15 2025
+NAMESPACE: dex
+STATUS: deployed
+REVISION: 1
+TEST SUITE: None
+NOTES:
+1. Get the application URL by running these commands:
+  http://dex.localhost.traefik.me/

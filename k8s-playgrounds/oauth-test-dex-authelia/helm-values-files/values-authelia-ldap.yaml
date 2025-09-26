@@ -126,6 +126,7 @@ configMap:
     #   - https://is.gd/ZAxz96 (how to use secrets)
     # secrets mounted below under "secret.additionalSecrets.[...]"
     oidc:
+      enabled: true
       # NO LONGER A STRING. see here: https://is.gd/zNwgrE
       # we mount that secret below. the config says "use value from '/secrets/authelia-ldap-hmac-value/hmac'"
       hmac_secret:
@@ -136,12 +137,11 @@ configMap:
         - key_id: "authelia"
           algorithm: "RS256"
           use: "sig"
-          key: |
-            {{- fileContent "/secrets/authelia-cert-private-key/tls.key" | nindent 12 }}
+          key:
+            path: /secrets/authelia-cert-private-key/tls.key
           # cert-manager certificate: https://is.gd/vLCkz7
-          certificate_chain: |
-            {{- fileContent "/secrets/authelia-cert-private-key/tls.crt" | nindent 12 }}
-            {{- fileContent "/secrets/authelia-cert-private-key/ca.crt" | nindent 12 }}
+          certificate_chain:
+            path: /secrets/authelia-cert-private-key/ca.crt
 
       # config ref: https://is.gd/nq0PHf
       enable_client_debug_messages: false

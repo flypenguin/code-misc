@@ -22,11 +22,11 @@ gateway:
   name: "traefik-default"
   listeners:
     web:
-      port: 8080
+      port: 9080
       hostname: "host.localhost.traefik.me"
       protocol: HTTP
     websecure:
-      port: 8443
+      port: 9443
       hostname: "host.localhost.traefik.me"
       protocol: HTTPS
 

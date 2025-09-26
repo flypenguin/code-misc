@@ -7,11 +7,6 @@ KIND_CLUSTER_NAME := test-oauth
 KCMD = kubectl --context kind-$(KIND_CLUSTER_NAME)
 HCMD = helm --kube-context kind-$(KIND_CLUSTER_NAME)
 
-AUTHELIA_USERS_CSV = config-files/authelia-users.csv
-AUTHELIA_USERS_CSV_TMPL = templates/authelia-users.csv.template
-AUTHELIA_USERS_HASHES_YAML = config-files/authelia-password-hashes.yaml
-AUTHELIA_USERS_K8S_SECRET = k8s-objects/k8s-authelia-users-secret.yaml
-
 HELM_VALUES := $(wildcard helm-values-files/values-*.yaml)
 KYML_VALUES := $(wildcard k8s-objects/k8s-*.yaml)
 HELM_DEPLOY := $(HELM_VALUES:helm-values-files/values-%.yaml=helm-values-files/deploy-%.txt)
@@ -59,35 +54,6 @@ k8s-objects/apply-%.txt: k8s-objects/k8s-%.yaml
 	) && mv $@.tmp $@ || (cat $@.tmp && rm $@.tmp)
 
 
-$(AUTHELIA_USERS_CSV):
-	@$(SCRIPT_START) ; \
-	if [[ -f "$@" ]]; then touch "$@" ; \
-	else cp -v "$(AUTHELIA_USERS_CSV_TMPL)" "$(AUTHELIA_USERS_CSV)" ; \
-	fi ; \
-
-
-$(AUTHELIA_USERS_HASHES_YAML): $(AUTHELIA_USERS_CSV)
-	@$(SCRIPT_START) ; \
-	echo "# this file is re-generated using 'make prepare-users'. do not edit." \
-	  > $@ ; \
-	./create-users.py "$(AUTHELIA_USERS_CSV)" >> "$@" ; \
-	echo "Created file: $@"
-
-
-$(AUTHELIA_USERS_K8S_SECRET): $(AUTHELIA_USERS_HASHES_YAML)
-	@$(SCRIPT_START) ; \
-	$(KCMD) create secret \
-	  generic \
-	  -n authelia \
-	  authelia-users-database \
-	  --from-file=users_database.yml=$(AUTHELIA_USERS_HASHES_YAML) \
-	  --dry-run=client \
-	  -o yaml \
-	> $@ \
-	&& echo "Created file: $@" \
-	|| rm -f $@
-
-
 clean:
 	@rm -fv helm-values-files/deploy-*.txt
 	@rm -fv k8s-objects/apply-*.txt
@@ -133,7 +99,7 @@ ingress-test:
 
 
 _select_engine:
-	@cd "$$(git rev-parse --show-toplevel)" ; \
+	@cd "$(MAKEFILE_DIR)" ; \
 	set -euo pipefail ; \
 	[[ -f .cluster_type ]] && source .cluster_type ; \
 	if [[ -z "$${CLUSTER_TYPE:-}" ]] ; then \
@@ -144,7 +110,7 @@ _select_engine:
 
 
 delete-cluster: _select_engine
-	@cd "$$(git rev-parse --show-toplevel)" ; \
+	@cd "$(MAKEFILE_DIR)" ; \
 	set -euo pipefail ; source .cluster_type ; \
 	if [[ "$$CLUSTER_TYPE" == "podman" ]] ; then \
 	  export KIND_EXPERIMENTAL_PROVIDER=podman ; \
@@ -160,20 +126,22 @@ delete-cluster: _select_engine
 
 
 create-cluster: _select_engine
-	@cd "$$(git rev-parse --show-toplevel)" ; \
+	@cd "$(MAKEFILE_DIR)" ; \
 	set -euo pipefail ; source .cluster_type ; \
 	if [[ "$$CLUSTER_TYPE" == "podman" ]] ; then \
 	  export KIND_EXPERIMENTAL_PROVIDER=podman ; \
 	fi ; \
 	if ! kind get clusters | grep -q $(KIND_CLUSTER_NAME) ; then \
 	  echo " * Creating kind cluster '$(KIND_CLUSTER_NAME)' ..." ; \
+	  make clean ; \
+	  make clean-users ; \
 	  kind create cluster --config ./config-files/kind-cluster.yaml -n $(KIND_CLUSTER_NAME) ; \
 	fi
 .PHONY: create-cluster
 
 
 kubeconfig: _select_engine
-	@cd "$$(git rev-parse --show-toplevel)" ; \
+	@cd "$(MAKEFILE_DIR)" ; \
 	set -euo pipefail ; source .cluster_type ; \
 	if [[ "$$CLUSTER_TYPE" == "podman" ]] ; then \
 	  export KIND_EXPERIMENTAL_PROVIDER=podman ; \
@@ -195,7 +163,7 @@ prepare-helm:
 .PHONY: prepare-helm
 
 
-prepare: prepare-cluster prepare-users prepare-helm
+prepare: create-cluster prepare-helm
 .PHONY: prepare
 
 
@@ -209,8 +177,21 @@ deploy-namespaces:
 .PHONY: deploy-namespaces
 
 
+DEPLOY_SLEEP ?= 10
+DEPLOY_TRIES ?= 3
+
 deploy: deploy-namespaces
+	@cd "$(MAKEFILE_DIR)" ; \
+	for i in {1..$(DEPLOY_TRIES)} ; do \
+	  REPEAT=0 ; \
+	  make deploy-helm || REPEAT=1 ; \
+	  make deploy-k8s  || REPEAT=1 ; \
+	  (( REPEAT == 0 )) && break || true ; \
+	done ; \
 deploy: $(AUTHELIA_USERS_K8S_SECRET)
-deploy: deploy-helm
-deploy: deploy-k8s
 .PHONY: deploy
+
+
+reset: delete-cluster prepare deploy
+	DEPLOY_SLEEPi=0 ; while i
+.PHONY: reset
