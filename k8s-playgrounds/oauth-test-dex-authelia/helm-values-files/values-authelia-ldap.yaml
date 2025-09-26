@@ -95,22 +95,10 @@ configMap:
       permit_unauthenticated_bind: false
       permit_feature_detection_failure: false
       user: '{{ secret "/secrets/authelia-ldap-server-config/user" }}' # yes this works.
-      ###  AS OF 2025-09-26, ALL OF THIS DOES __NOT__ WORK:
-      #
-      ## (1)
-      # password:
-      #   disabled: true
-      #   secret_name: authelia-ldap-server-config
-      #   path: password
-      #
-      ## (2)
-      # password:
-      #   value: '{{ secret "/secrets/authelia-ldap-server-config/password" }}'
-      #
-      ## The ONLY thing working seems to be:
       password:
-        value: "MY VALUE"
-      ### END
+        # THIS READS (!!!!) THE PASS FROM THE SECRET. it does NOT "create" a secret here.
+        secret_name: authelia-ldap-server-config
+        path: password
       attributes:
         username: "userPrincipalName"
         display_name: "displayName"
@@ -128,6 +116,8 @@ configMap:
       # NO LONGER A STRING. see here: https://is.gd/zNwgrE
       # we mount that secret below. the config says "use value from '/secrets/authelia-ldap-hmac-value/hmac'"
       hmac_secret:
+        # BIG QUESTION: since above (ldap.password) this has to be "enabled", i would assume
+        # that this combination here is totally broken. let's dig into this ... later.
         disabled: true
         secret_name: "authelia-ldap-hmac-value"
         path: hmac
