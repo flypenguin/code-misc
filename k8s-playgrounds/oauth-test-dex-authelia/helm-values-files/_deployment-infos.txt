@@ -4,6 +4,7 @@ CHART authelia-ldap authelia/authelia
 CHART authelia-local authelia/authelia
 CHART authentik authentik/authentik
 CHART authentik-dex dex/dex
+CHART reflector emberstack/reflector
 CHART cert-manager cert-manager/cert-manager
 CHART dex dex/dex
 CHART external-secrets external-secrets/external-secrets

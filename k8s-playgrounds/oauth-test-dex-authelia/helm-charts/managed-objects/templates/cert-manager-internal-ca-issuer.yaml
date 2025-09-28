@@ -1,0 +1,11 @@
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: internal-ca
+  namespace: cert-manger
+  labels:
+    {{- include "managed-objects.labels" . | nindent 4 }}
+spec:
+  ca:
+    secretName: internal-ca-cert

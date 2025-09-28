@@ -1,0 +1,8 @@
+---
+##:CHART emberstack/reflector
+##:REPO emberstack https://emberstack.github.io/helm-charts
+
+# this really does not need any config.
+# reference here:
+#
+#   https://github.com/emberstack/kubernetes-reflector

@@ -11,55 +11,83 @@ HCMD = helm --kube-context kind-$(KIND_CLUSTER_NAME)
 AUTHELIA_USERS_CSV = config-files/authelia-users.csv
 AUTHELIA_USERS_CSV_TMPL = templates/authelia-users.csv.template
 AUTHELIA_USERS_HASHES_YAML = config-files/authelia-password-hashes.yaml
-AUTHELIA_USERS_K8S_SECRET = k8s-objects/k8s-authelia-users-secret.yaml
-
-HELM_VALUES := $(wildcard helm-values-files/values-*.yaml)
-KYML_VALUES := $(wildcard k8s-objects/k8s-*.yaml)
-HELM_DEPLOY := $(HELM_VALUES:helm-values-files/values-%.yaml=helm-values-files/.deploy/%.txt)
-KYML_DEPLOY := $(KYML_VALUES:k8s-objects/k8s-%.yaml=k8s-objects/.apply/%.txt)
-
-SCRIPT_START = cd $(MAKEFILE_DIR) ; set -euo pipefail
+AUTHELIA_USERS_K8S_SECRET = helm-charts/managed-objects/templates/authelia-local-users-database.yaml
 
 CLUSTER_HIGH_PORT_HTTPS = 8443
 CLUSTER_HIGH_PORT_HTTP = 8080
 CLUSTER_URL = localhost.traefik.me
 CLUSTER_CREATE_NAMESPACES = authelia-local authelia-ldap
 
+LOCAL_CHART_VALUES_FILES := $(wildcard helm-values-files/local-*.yaml)
+EXTERNAL_CHART_VALUES_FILES := $(wildcard helm-values-files/values-*.yaml)
+ALL_VALUES := $(wildcard helm-values-files/*.yaml)
+HELM_DEPLOY := $(ALL_VALUES:helm-values-files/%.yaml=helm-values-files/.deploy/%.txt)
 
-helm-values-files/.deploy/%.txt: helm-values-files/values-%.yaml
+SCRIPT_START = cd $(MAKEFILE_DIR) ; set -euo pipefail
+
+# FUCK ME.
+# Note that "$(1)" is the ONLY THING that is not "double-escaped", because this is
+# the parameter which is filled in. _that_ should be returned _replaced_, and all
+# the other stuff should _not_ be evaluated just now.
+# why?
+# because the "eval()" call below should see the dollar signs, and THEN evaluate
+# them.
+define LOCAL_DEPENDENCIES=
+file_only = $$(notdir $(1))
+file_stem = $$(basename $$(file_only))
+inner_stem = $$(subst local-,,$$(basename $$(file_stem)))
+helm-values-files/.deploy/$$(file_stem).txt: \
+  helm-values-files/$$(file_only) \
+  helm-charts/$$(inner_stem)/values.yaml \
+  helm-charts/$$(inner_stem)/.helmignore \
+  $$(wildcard helm-charts/$$(inner_stem)/templates/*.yaml)
+  $$(wildcard helm-charts/$$(inner_stem)/templates/*.yml)
+endef
+
+# dynamically add the dependencies to the target below.
+$(foreach file,$(LOCAL_CHART_VALUES_FILES),$(eval $(call LOCAL_DEPENDENCIES, $(file))) )
+
+
+#
+# Some notes:
+#   - for LOCAL deployments there is no namespace. the namespace should be
+#     part of the managed objects.
+#   - ... that's it.
+#
+helm-values-files/.deploy/%.txt: helm-values-files/%.yaml
 	@$(SCRIPT_START) ; \
-	mkdir -p helm-values-files/.deploy ; \
-	rm -f "$@" "$@.tmp"; \
-	name=$*; \
-	chart="$$(\
-	  cat helm-values-files/_deployment-infos.txt \
-	  | grep -E '^CHART $* ' \
-	  | cut -d " " -f 3 \
-	  || true \
-	)" ; \
-	ns="$$(\
-	  cat helm-values-files/_deployment-infos.txt \
-	  | grep -E '^NS $*' \
-	  | cut -d " " -f 3 \
-	  || true \
-	)" ; \
-	[[ -z "$$chart" ]] && chart="$*" ; \
-	[[ -z "$$ns" ]] && ns="$*" ; \
+	TARGET="$@" ; FILENAME="$${TARGET##*/}" ; DIRNAME="$${TARGET%/*}" ; \
+	STEM="$${FILENAME%.*}" ; INNER_STEM="$${STEM#*-}" ; INNER_STEM="$${INNER_STEM%%.*}" ; \
+	VALUES_FILE="helm-values-files/$$STEM.yaml" ; \
+	VALUES_FILE_NAME="$${VALUES_FILE##*/}" ; \
+	mkdir -p "$$DIRNAME" ;  rm -f "$$FILENAME" "$$FILENAME.tmp" ; \
+	if [[ "$$FILENAME" == "local-"* ]]; then \
+	  if ! echo "$$VALUES_FILE_NAME" | grep -Eq '^local-[^.]+\.[^.]+\.yaml' ; then \
+	    echo -e "\nERROR:    Values file does not match pattern: 'local-CHART.SUFFIX.yaml'. Aborting." ; \
+	    echo -e "FILENAME: $$VALUES_FILE_NAME\n" ; \
+	    false ; \
+	  fi ; \
+	  VALUE_SUFFIX="$${STEM#*.}" ; \
+	  DEFAULT_NAMESPACE="$${VALUE_SUFFIX}" ; \
+	  CHART="./helm-charts/$${INNER_STEM}" ; \
+	  DEPLOYMENT_NAME="$${VALUE_SUFFIX}" ; \
+	else \
+	  DEFAULT_NAMESPACE="$$INNER_STEM" ; \
+	  CHART="$$(cat $$VALUES_FILE | grep -E '##:CHART')" ; CHART="$${CHART##* }" ; \
+	  DEPLOYMENT_NAME="$${INNER_STEM}" ; \
+	fi ; \
+	if [[ -z "$$CHART" ]] ; then \
+	  echo "ERROR: No chart found. Aborting." ; false ; \
+	fi ; \
+	NS="$$(cat $$VALUES_FILE | grep -E '##:NAMESPACE' || true)" ; NS="$${NS##* }" ; \
+	[[ -z "$$NS" ]] && NS="$${DEFAULT_NAMESPACE}" ; \
+	[[ "$$NS" == "-" ]] && NS="" ; \
+	[[ -n "$$NS" ]] && NS="-n $$NS" ; \
 	(\
 	  set -x ; \
-	  helm upgrade -i --create-namespace -n $$ns -f $< $* $$chart > $@.tmp 2>&1 \
-	) && mv $@.tmp $@ || (cat $@.tmp && false)
+	  helm upgrade -i --create-namespace $$NS -f "$$VALUES_FILE" $$DEPLOYMENT_NAME $$CHART > "$$TARGET.tmp" 2>&1 \
+	) && mv "$$TARGET.tmp" "$$TARGET" || (cat $$TARGET.tmp ; rm "$$TARGET.tmp" ; touch .deploy_error)
 
-
-k8s-objects/.apply/%.txt: k8s-objects/k8s-%.yaml
-	@$(SCRIPT_START) ; \
-	mkdir -p k8s-objects/.apply ; \
-	rm -f "$@" "$@.tmp"; \
-	name=$*; \
-	(\
-	  set -x ; \
-	  kubectl apply -f $< > $@.tmp 2>&1 \
-	) && mv $@.tmp $@ || (cat $@.tmp && rm $@.tmp && false)
 
 
 $(AUTHELIA_USERS_CSV):
@@ -79,6 +107,8 @@ $(AUTHELIA_USERS_HASHES_YAML): $(AUTHELIA_USERS_CSV)
 
 $(AUTHELIA_USERS_K8S_SECRET): $(AUTHELIA_USERS_HASHES_YAML)
 	@$(SCRIPT_START) ; \
+	if
+	sed -Ei '/users_database.yml/d' $@ ; \
 	$(KCMD) create secret \
 	  generic \
 	  -n authelia-local \
@@ -86,9 +116,10 @@ $(AUTHELIA_USERS_K8S_SECRET): $(AUTHELIA_USERS_HASHES_YAML)
 	  --from-file=users_database.yml=$(AUTHELIA_USERS_HASHES_YAML) \
 	  --dry-run=client \
 	  -o yaml \
-	> $@ \
-	&& echo "Created file: $@" \
-	|| (rm -f $@ ; false)
+	| grep users_database.yml \
+	>> $@ \
+	&& echo "Updated file: $@" \
+	|| false
 
 
 clean-users:
@@ -99,16 +130,11 @@ clean-users:
 
 clean:
 	@rm -rfv helm-values-files/.deploy
-	@rm -rfv k8s-objects/.apply
 .PHONY: clean
 
 
 deploy-helm: $(HELM_DEPLOY)
 .PHONY: deploy-helm
-
-
-deploy-k8s: $(KYML_DEPLOY)
-.PHONY: deploy-k8s
 
 
 reverse-proxy:
@@ -193,10 +219,12 @@ kubeconfig: _select_engine
 
 
 prepare-helm:
+	helm repo add     apache-superset   https://apache.github.io/superset
 	helm repo add     authelia          https://charts.authelia.com
 	helm repo add     authentik         https://charts.goauthentik.io
 	helm repo add     cert-manager      https://charts.jetstack.io
 	helm repo add     dex               https://charts.dexidp.io
+	helm repo add     emberstack        https://emberstack.github.io/helm-charts
 	helm repo add     external-secrets  https://charts.external-secrets.io
 	helm repo add     oauth2-proxy      https://oauth2-proxy.github.io/manifests/
 	helm repo add     traefik           https://traefik.github.io/charts
@@ -229,12 +257,10 @@ DEPLOY_TRIES ?= 3
 deploy: deploy-namespaces
 	@cd "$(MAKEFILE_DIR)" ; \
 	for i in {1..$(DEPLOY_TRIES)} ; do \
-	  REPEAT=0 ; \
-	  make -s deploy-helm || REPEAT=1 ; \
-	  make -s deploy-k8s  || REPEAT=1 ; \
-	  if (( REPEAT == 0 )) ; then \
-	    break ; \
-	  elif (( REPEAT < $(DEPLOY_TRIES) )) ; then \
+	  find . -iname ".deploy_error" -delete ; \
+	  make -s deploy-helm ; \
+	  [[ ! -f .deploy_error ]] && break ; \
+	  if (( REPEAT < $(DEPLOY_TRIES) )) ; then \
 	    echo -e "\n\nDeployment run $$i (of max $(DEPLOY_TRIES)) completed with errors, trying again in $(DEPLOY_SLEEP) seconds ..." ; \
 	    sleep $(DEPLOY_SLEEP) ; \
 	    echo -e "\nRetry.\n" ; \

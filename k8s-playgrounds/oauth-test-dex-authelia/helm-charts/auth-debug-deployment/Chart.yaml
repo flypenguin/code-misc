@@ -1,0 +1,7 @@
+apiVersion: v2
+name: auth-debug-deployment
+description: A test deployment for checking traefik forward auth
+
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

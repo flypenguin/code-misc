@@ -1,3 +1,7 @@
+---
+##:CHART traefik/traefik
+##:REPO traefik https://traefik.github.io/charts
+
 # Default values for Traefik
 # This is a YAML-formatted file.
 # Declare variables to be passed into templates
@@ -8,13 +12,16 @@ ingressClass:
   name: "traefik"
 
 experimental:
-  abortOnPluginFailure: false
+  abortOnPluginFailure: true
   fastProxy:
     enabled: false
     debug: false
   kubernetesGateway:
     enabled: false
-  plugins: {}
+  plugins:
+    traefikoidc:
+      moduleName: "github.com/lukaszraczylo/traefikoidc"
+      version: "v0.7.5-rc.1"
   localPlugins: {}
 
 gateway:
@@ -132,7 +139,6 @@ ports:
     # allowACMEByPass: false
     expose:
       default: true
-    exposedPort: 9443
     protocol: TCP
     forwardedHeaders:
       trustedIPs: []

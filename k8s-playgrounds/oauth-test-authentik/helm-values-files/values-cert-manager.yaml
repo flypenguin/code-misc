@@ -1,4 +1,6 @@
 ---
+##:CHART cert-manager/cert-manager
+
 crds:
   # non-default, see https://is.gd/yLE0Dy
   enabled: true

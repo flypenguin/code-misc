@@ -1,4 +1,7 @@
 ---
+##:CHART cert-manager/cert-manager
+##:REPO cert-manager https://charts.jetstack.io
+
 crds:
   # non-default, see https://is.gd/yLE0Dy
   enabled: true

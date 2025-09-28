@@ -5,5 +5,7 @@ helm-default-values/
 *.key
 node_modules
 .envrc
-*.ignore.*
-*.ignore.*
+*.ignore.yml
+*.ignore.yaml
+!secret-*
+!local-*

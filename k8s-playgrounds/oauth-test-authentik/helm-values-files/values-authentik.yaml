@@ -1,4 +1,6 @@
 ---
+##:CHART authentik/authentik
+
 global:
   security:
     allowInsecureImages: true

@@ -1,0 +1,11 @@
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ include "stupid-ingress-test.fullname" . }}-bar
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "stupid-ingress-test.labels" . | nindent 4 }}
+spec:
+  selector: { app: {{ include "stupid-ingress-test.fullname" . }}-bar }
+  ports: [{ port: 8080 }]

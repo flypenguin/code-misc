@@ -1,4 +1,7 @@
 ---
+##:CHART dex/dex
+##:REPO dex https://charts.dexidp.io
+
 replicaCount: 1
 namespaceOverride: "dex"
 hostAliases: []
@@ -8,18 +11,6 @@ https:
 configSecret:
   create: true
   # name: ""
-
-envVars:
-  - name: OIDC_SECRET_AUTHELIA_LOCAL
-    valueFrom:
-      secretKeyRef:
-        name: oidc-client-dex-authelia-local
-        key: client-secret
-  - name: OIDC_CLIENT_NAME_AUTHELIA_LOCAL
-    valueFrom:
-      secretKeyRef:
-        name: oidc-client-dex-authelia-local
-        key: client-id
 
 config:
   # config examples:
@@ -39,13 +30,13 @@ config:
   connectors:
     - type: oidc
       id: authelia-local
-      name: Authelia Local Users
+      name: Externe Nutzer
       config:
-        issuer: https://auth-local.localhost.traefik.me
+        issuer: http://authelia-local.authelia-local.svc.cluster.local
 
         # Connector config values starting with a "$" will read from the environment.
-        clientID: $OIDC_SECRET_AUTHELIA_LOCAL
-        clientSecret: $OIDC_CLIENT_ID_AUTHELIA_LOCAL
+        clientID: dex
+        clientSecret: $CLIENT_SECRET_AUTHELIA_LOCAL
 
         # Dex's issuer URL + "/callback"
         redirectURI: https://dex.localhost.traefik.me/callback
@@ -71,14 +62,26 @@ config:
           # The set claim is used as preferred username.
           # Default: preferred_username
           # preferred_username: other_user_name
+    - type: oidc
+      id: authelia-ldap
+      name: LDAP Nutzer (Windows)
+      config:
+        issuer: http://authelia-ldap.authelia-ldap.svc.cluster.local
+        clientID: dex
+        clientSecret: $CLIENT_SECRET_AUTHELIA_LDAP
+        redirectURI: https://dex.localhost.traefik.me/callback
 
-service:
-  type: ClusterIP
-  ports:
-    http:
-      port: 5556
-    https:
-      port: 5554
+envVars:
+  - name: CLIENT_SECRET_AUTHELIA_LOCAL
+    valueFrom:
+      secretKeyRef:
+        name: dex-client-secret-authelia-local
+        key: client_secret
+  - name: CLIENT_SECRET_AUTHELIA_LDAP
+    valueFrom:
+      secretKeyRef:
+        name: dex-client-secret-authelia-ldap
+        key: client_secret
 
 ingress:
   enabled: true
@@ -91,8 +94,24 @@ ingress:
           pathType: ImplementationSpecific
   tls: []
 
+networkPolicy:
+  enabled: false
+
+service:
+  type: ClusterIP
+  ports:
+    http:
+      port: 5556
+    https:
+      port: 5554
+
 serviceMonitor:
   enabled: false
 
-networkPolicy:
-  enabled: false
+# see example config file "config.yaml.dist": https://is.gd/MY10DS
+staticClients:
+  - id: traefik-oidc
+    redirectURIs:
+      - ...
+    name: Traefik OIDC authentication
+    secret: qem80y5no10g7qpz5h0nhjym0j9hawh8qod70ez1ufkjrb2gz3ye455mj8fkrzhc

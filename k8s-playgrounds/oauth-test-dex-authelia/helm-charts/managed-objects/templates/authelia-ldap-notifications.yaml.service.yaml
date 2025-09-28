@@ -1,0 +1,16 @@
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: authelia-ldap-notifications
+  namespace: authelia-ldap
+  labels:
+    {{- include "managed-objects.labels" . | nindent 4 }}
+spec:
+  selector:
+    app.kubernetes.io/instance: authelia-ldap
+    app.kubernetes.io/name: authelia-ldap
+  ports:
+    - name: filemanager
+      port: 28080
+      targetPort: filemanager

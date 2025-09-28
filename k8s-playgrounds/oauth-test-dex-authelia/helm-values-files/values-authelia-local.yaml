@@ -1,4 +1,7 @@
 ---
+##:CHART authelia/authelia
+##:REPO authelia https://charts.authelia.com
+
 rbac:
   enabled: true
 
@@ -43,7 +46,7 @@ pod:
         - |
           set -euo pipefail
           CS=/ppc/client-secrets
-          mkdir $CS
+          mkdir -p $CS
           cd $CS
           echo "Password SHA256: $(echo "$CLIENT_SECRET" | sha256sum)"
           authelia crypto hash generate --password "$CLIENT_SECRET" | sed -E "s/^([^ ]+ )?//" > dex-authelia-local
@@ -54,7 +57,7 @@ pod:
         - name: CLIENT_SECRET
           valueFrom:
             secretKeyRef:
-              name: authelia-local-client-secret-dex
+              name: dex-client-secret-authelia-local
               key: client_secret
       volumeMounts:
         - name: pre-processed-config-values
@@ -191,10 +194,6 @@ postgresql:
 
 secret:
   additionalSecrets:
-    authelia-local-client-secret-dex:
-      path: ""
-      items:
-        - key: client_secret
     authelia-local-hmac-value:
       path: ""
       items:

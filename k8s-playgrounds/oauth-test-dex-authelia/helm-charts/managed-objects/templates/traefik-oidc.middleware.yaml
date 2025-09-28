@@ -1,0 +1,17 @@
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: oidc
+  namespace: {{ .Values.traefik.namespace }}
+spec:
+  plugin:
+    traefikoidc:
+      providerURL: http://dex.dex.svc.cluster.local:5556
+      clientID: traefik-oidc
+      clientSecret: qem80y5no10g7qpz5h0nhjym0j9hawh8qod70ez1ufkjrb2gz3ye455mj8fkrzhc
+      sessionEncryptionKey: d6ydbjrkt5go3vxmuzxm7vp8vb6qtzekinx1wiwekxg8xlp7
+      callbackURL: /oauth2/callback
+      logoutURL: /oauth2/logout
+      scopes:
+        - roles

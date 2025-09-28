@@ -1,0 +1,20 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx
+  labels:
+    app.kubernetes.io/name: debug-pod
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: debug-pod
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: debug-pod
+    spec:
+      containers:
+        - name: debug-pod
+          image: debian:trixie
+          args: [sleep, infinity]

@@ -1,4 +1,7 @@
 ---
+##:CHART authelia/authelia
+##:REPO authelia https://charts.authelia.com
+
 rbac:
   enabled: true
 
@@ -40,7 +43,7 @@ pod:
         - |
           set -euo pipefail
           CS=/ppc/client-secrets
-          mkdir $CS
+          mkdir -p $CS
           cd $CS
           echo "Password SHA256: $(echo "$CLIENT_SECRET" | sha256sum)"
           authelia crypto hash generate --password "$CLIENT_SECRET" | sed -E "s/^([^ ]+ )?//" > dex-authelia-ldap
@@ -51,7 +54,7 @@ pod:
         - name: CLIENT_SECRET
           valueFrom:
             secretKeyRef:
-              name: authelia-ldap-client-secret-dex
+              name: dex-client-secret-authelia-ldap
               key: client_secret
       volumeMounts:
         - name: pre-processed-config-values
@@ -214,10 +217,6 @@ secret:
         - key: base_dn
         - key: user
         - key: password
-    authelia-ldap-client-secret-dex:
-      path: ""
-      items:
-        - key: client_secret
     authelia-ldap-hmac-value:
       path: ""
       items:

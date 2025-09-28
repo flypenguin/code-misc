@@ -1,0 +1,43 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "stupid-ingress-test.labels" . | nindent 4 }}
+  annotations:
+    cert-manager.io/cluster-issuer: internal-ca
+spec:
+  tls:
+    - hosts:
+        - "foo.localhost.traefik.me"
+        - "bar.localhost.traefik.me"
+        - "xxx.localhost.traefik.me"
+      secretName: tls-{{ include "stupid-ingress-test.fullname" . }}
+  rules:
+    - host: foo.localhost.traefik.me
+      http:
+        paths:
+          - pathType: Prefix
+            path: /
+            backend:
+              service: { name: {{ include "stupid-ingress-test.fullname" . }}-foo, port: { number: 8080 } }
+    - host: bar.localhost.traefik.me
+      http:
+        paths:
+          - pathType: Prefix
+            path: /
+            backend:
+              service: { name: {{ include "stupid-ingress-test.fullname" . }}-bar, port: { number: 8080 } }
+    - http:
+        paths:
+          - pathType: Exact
+            path: /ingress-test-foo
+            backend:
+              service: { name: {{ include "stupid-ingress-test.fullname" . }}-foo, port: { number: 8080 } }
+    - http:
+        paths:
+          - pathType: Exact
+            path: /ingress-test-bar
+            backend:
+              service: { name: {{ include "stupid-ingress-test.fullname" . }}-bar, port: { number: 8080 } }
