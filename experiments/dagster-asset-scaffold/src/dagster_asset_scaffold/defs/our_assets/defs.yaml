@@ -1,0 +1,11 @@
+type: dagster_asset_scaffold.components.our_param_asset.OurParamAsset
+
+# "attributes" are simply the class vars.
+attributes:
+  # so this is "OurParamAsset.import_configs" :)
+  # each element must be "of type" <CSVTable>, i.e. have the properties
+  # of the CSVTable class
+  import_configs:
+    - table_name: table_foo
+    - table_name: table_bar
+    - table_name: tables_are_boring
