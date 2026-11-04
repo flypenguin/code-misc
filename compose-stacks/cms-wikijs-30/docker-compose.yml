@@ -1,0 +1,26 @@
+# based on: https://docs.js.wiki/setup/installation
+services:
+  db:
+    image: postgres:18
+    environment:
+      POSTGRES_DB: wikijs
+      POSTGRES_PASSWORD: wikijs
+      POSTGRES_USER: wikijs
+    restart: unless-stopped
+    volumes:
+      - ./data/postgres:/var/lib/postgresql
+
+  wiki:
+    image: ghcr.io/requarks/wiki:3
+    depends_on:
+      - db
+    environment:
+      ADMIN_EMAIL: admin@admin.com
+      ADMIN_PASS: admin
+      DB_HOST: db
+      DB_USER: wikijs
+      DB_PASS: wikijs
+      DB_NAME: wikijs
+    restart: unless-stopped
+    ports:
+      - "8080:3000"
