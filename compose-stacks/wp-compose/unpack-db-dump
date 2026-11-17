@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# Usage: unpack-db-dump ARCHIVE
+# Moves the first SQL dump (*.sql, *.sql.gz, .xz, .zst) found in ARCHIVE (tar.*, zip, or a directory) to data/dump.sql*.
+set -eu
+cd "$(dirname "$0")"
+
+die() {
+  echo "unpack-db-dump: $*" >&2
+  exit 1
+}
+
+src=${1:-}
+[ -n "$src" ] || die "usage: unpack-db-dump ARCHIVE"
+[ -e "$src" ] || die "archive '$src' not present"
+
+tmp=data/.unpack-db
+rm -rf "$tmp"
+mkdir -p "$tmp"
+trap 'rm -rf "$tmp"' EXIT
+echo "unpack-db-dump: unpacking $src ..."
+case $src in
+  *.sql | *.sql.gz | *.sql.xz | *.sql.zst) cp -p "$src" "$tmp/" ;;
+  *.zip) unzip -q "$src" -d "$tmp" ;;
+  *) if [ -d "$src" ]; then cp -a "$src" "$tmp/"; else tar -xf "$src" -C "$tmp"; fi ;;
+esac
+
+# shallowest first, then alphabetical
+file=$(find "$tmp" -type f \( -name '*.sql' -o -name '*.sql.gz' -o -name '*.sql.xz' -o -name '*.sql.zst' \) |
+  awk '{ print gsub("/", "/"), $0 }' | sort -n -k1,1 -k2 | head -1 | cut -d' ' -f2-)
+[ -n "$file" ] || die "no .sql file in '$src'"
+
+ext=${file##*.sql}
+rm -f data/dump.sql*
+mv "$file" "data/dump.sql$ext"
+echo "unpack-db-dump: ${file#"$tmp"/} -> data/dump.sql$ext"

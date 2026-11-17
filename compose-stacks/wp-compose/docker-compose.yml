@@ -1,0 +1,47 @@
+# Variables come from .envrc, written by ./inspect-dump. Use "make up", see README.md.
+services:
+  db:
+    image: ${WP_DB_IMAGE:?run "make up" or ./inspect-dump first}
+    environment:
+      # MYSQL_* works for both mysql and mariadb images
+      MYSQL_DATABASE: ${WP_DB_NAME:?}
+      MYSQL_USER: wp
+      MYSQL_PASSWORD: wp
+      MYSQL_ROOT_PASSWORD: root
+    volumes:
+      - ./data/mysql:/var/lib/mysql
+      - ./${WP_DUMP_FILE:?}:/docker-entrypoint-initdb.d/${WP_DUMP_NAME:?}:ro
+  wordpress:
+    image: wordpress:php8.2-apache # match the live site's PHP version
+    depends_on: [db]
+    ports: ["8080:80"]
+    environment:
+      WORDPRESS_DB_HOST: db
+      WORDPRESS_DB_NAME: ${WP_DB_NAME:?}
+      WORDPRESS_DB_USER: wp
+      WORDPRESS_DB_PASSWORD: wp
+      WORDPRESS_TABLE_PREFIX: ${WP_TABLE_PREFIX:?}
+      WORDPRESS_CONFIG_EXTRA: |
+        define('WP_HOME', 'http://localhost:8080');
+        define('WP_SITEURL', 'http://localhost:8080');
+        // enables application passwords without https, see wp_is_application_passwords_supported()
+        define('WP_ENVIRONMENT_TYPE', 'local');
+    volumes:
+      - wp:/var/www/html
+      - ./data/wp-content:/var/www/html/wp-content
+  cli:
+    image: wordpress:cli-php8.2
+    user: "33:33"
+    depends_on: [db]
+    environment:
+      WORDPRESS_DB_HOST: db
+      WORDPRESS_DB_NAME: ${WP_DB_NAME:?}
+      WORDPRESS_DB_USER: wp
+      WORDPRESS_DB_PASSWORD: wp
+      WORDPRESS_TABLE_PREFIX: ${WP_TABLE_PREFIX:?}
+    volumes:
+      - wp:/var/www/html
+      - ./data/wp-content:/var/www/html/wp-content
+    profiles: [tools] # only runs when called explicitly
+volumes:
+  wp:

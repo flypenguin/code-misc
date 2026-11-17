@@ -1,0 +1,8 @@
+dump.sql
+dump.sql.*
+*.zst
+*.zip
+*.tar*
+*.tgz
+.envrc
+data/
