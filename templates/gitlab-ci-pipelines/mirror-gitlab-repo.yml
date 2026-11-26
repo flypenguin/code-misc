@@ -1,0 +1,27 @@
+mirror:
+  image:
+    name: alpine/git:latest
+    entrypoint: [""]
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "web"
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+  script:
+    - |
+      if [ -n "$SOURCE_SSH_KEY" ]; then
+        : "${SOURCE_KNOWN_HOSTS:?SOURCE_KNOWN_HOSTS must be set when SOURCE_SSH_KEY is}"
+        command -v ssh >/dev/null || apk add --no-cache openssh-client >/dev/null
+        install -m 600 "$SOURCE_SSH_KEY" /tmp/id_source
+        export GIT_SSH_COMMAND="ssh -i /tmp/id_source -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$SOURCE_KNOWN_HOSTS"
+      fi
+    - git clone --mirror "$SOURCE_REPO_URL" src.git
+    - cd src.git
+    - |
+      set -- 'refs/heads/*:refs/heads/*' 'refs/tags/*:refs/tags/*'
+      # branches matching MIRROR_EXCLUDE_BRANCHES (e.g. "a3b3/*") are neither pushed nor pruned
+      if [ -n "$MIRROR_EXCLUDE_BRANCHES" ]; then set -- "$@" "^refs/heads/$MIRROR_EXCLUDE_BRANCHES"; fi
+      git push --force --prune -o ci.skip "https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git" "$@"
+    - |
+      if [ -n "$HEALTHCHECK_URL" ]; then
+        apk add --no-cache curl >/dev/null
+        curl -fsS --retry 3 -o /dev/null "$HEALTHCHECK_URL"
+      fi
